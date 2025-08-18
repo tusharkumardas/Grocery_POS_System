@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JTable;
 import java.sql.ResultSet;
+import Project.BillGenerator;
 
 
 /**
@@ -487,6 +488,11 @@ public class NewJFrame extends javax.swing.JFrame {
         jButton2.setBackground(new java.awt.Color(46, 152, 249));
         jButton2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         jButton2.setText("GENERATE BILL");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
         getContentPane().add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(1190, 520, 320, -1));
 
         jButton3.setBackground(new java.awt.Color(255, 102, 102));
@@ -538,6 +544,14 @@ public class NewJFrame extends javax.swing.JFrame {
         ProductEntry pe= new ProductEntry();
         pe.setVisible(true);
     }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        String billText = BillGenerator.generateBill(jTable1);
+        Bill_Dialogbox preview = new Bill_Dialogbox();
+        preview.setBillText(billText); // set text inside dialog
+        preview.setVisible(true);
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
