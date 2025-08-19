@@ -460,6 +460,11 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel7.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 180, -1));
 
         jButton8.setText("PURCHASE");
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 180, -1));
 
         jButton9.setText("INVENTORY");
@@ -552,6 +557,12 @@ public class NewJFrame extends javax.swing.JFrame {
         preview.setBillText(billText); // set text inside dialog
         preview.setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        // TODO add your handling code here:
+        Purchase pr= new Purchase();
+        pr.setVisible(true);
+    }//GEN-LAST:event_jButton8ActionPerformed
 
     /**
      * @param args the command line arguments
