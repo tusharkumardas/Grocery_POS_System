@@ -457,6 +457,11 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel7.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jButton7.setText("SALE");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 180, -1));
 
         jButton8.setText("PURCHASE");
@@ -468,21 +473,51 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel7.add(jButton8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 180, -1));
 
         jButton9.setText("INVENTORY");
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, 180, -1));
 
         jButton10.setText("EXPENSE");
+        jButton10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton10ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, 180, -1));
 
         jButton11.setText("CUSTOMER");
+        jButton11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton11ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 280, 180, -1));
 
         jButton12.setText("REPORTS");
+        jButton12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton12ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 340, 180, -1));
 
         jButton13.setText("STAFF");
+        jButton13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton13ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 400, 180, -1));
 
         jButton14.setText("SETTINGS");
+        jButton14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton14ActionPerformed(evt);
+            }
+        });
         jPanel7.add(jButton14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 460, 180, -1));
 
         jButton16.setText("HOME");
@@ -563,6 +598,48 @@ public class NewJFrame extends javax.swing.JFrame {
         Purchase pr= new Purchase();
         pr.setVisible(true);
     }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+        Sale sl=new Sale();
+        sl.setVisible(true);
+    }//GEN-LAST:event_jButton7ActionPerformed
+
+    private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
+        // TODO add your handling code here:
+        Settings stg=new Settings();
+        stg.setVisible(true);
+    }//GEN-LAST:event_jButton14ActionPerformed
+
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        // TODO add your handling code here:
+        StockManagement stc=new StockManagement();
+        stc.setVisible(true);
+    }//GEN-LAST:event_jButton9ActionPerformed
+
+    private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
+        // TODO add your handling code here:
+        Customer cr=new Customer();
+        cr.setVisible(true);
+    }//GEN-LAST:event_jButton11ActionPerformed
+
+    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+        // TODO add your handling code here:
+        Staff stf=new Staff();
+        stf.setVisible(true);
+    }//GEN-LAST:event_jButton13ActionPerformed
+
+    private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
+        // TODO add your handling code here:
+        Report rpt=new Report();
+        rpt.setVisible(true);
+    }//GEN-LAST:event_jButton12ActionPerformed
+
+    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+        // TODO add your handling code here:
+        Expense exp=new Expense();
+        exp.setVisible(true);
+    }//GEN-LAST:event_jButton10ActionPerformed
 
     /**
      * @param args the command line arguments
