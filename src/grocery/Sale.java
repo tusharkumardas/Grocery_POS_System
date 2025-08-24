@@ -3,18 +3,92 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package grocery;
-
+import Project.ConnectionProvider;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.io.File;
+import java.awt.Desktop;
+import Project.SalesPDFExporter;
 /**
  *
  * @author Tushar Kumar Das
  */
 public class Sale extends javax.swing.JFrame {
+    public void loadSalesTable() {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        con = ConnectionProvider.getCon();
+        String sql = "SELECT id, invoice_no, customer_id, total_amount, total_gst, net_amount, " +
+                     "amount_paid, amount_due, payment_mode, pdf_path, created_at FROM sales";
+        ps = con.prepareStatement(sql);
+        rs = ps.executeQuery();
+
+        // Table Model (matching sales table columns)
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[]{
+                "ID", "Invoice No", "Customer ID", "Total Amount", "Total GST",
+                "Net Amount", "Amount Paid", "Amount Due", "Payment Mode",
+                "PDF Path", "Created At"
+            }, 0
+        );
+
+        // Fill data
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getInt("id"),
+                rs.getString("invoice_no"),
+                rs.getInt("customer_id"),
+                rs.getDouble("total_amount"),
+                rs.getDouble("total_gst"),
+                rs.getDouble("net_amount"),
+                rs.getDouble("amount_paid"),
+                rs.getDouble("amount_due"),
+                rs.getString("payment_mode"),
+                rs.getString("pdf_path"),
+                rs.getTimestamp("created_at")
+            });
+        }
+
+        // Set model into JTable
+        salesTable.setModel(model);
+
+        // Hide ID column (index 0)
+        salesTable.getColumnModel().getColumn(0).setMinWidth(0);
+        salesTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        salesTable.getColumnModel().getColumn(0).setWidth(0);
+
+        // Hide PDF Path column (index 9)
+        salesTable.getColumnModel().getColumn(9).setMinWidth(0);
+        salesTable.getColumnModel().getColumn(9).setMaxWidth(0);
+        salesTable.getColumnModel().getColumn(9).setWidth(0);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error loading sales data: " + e.getMessage());
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+            if (con != null) con.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+}
 
     /**
      * Creates new form Sale
      */
     public Sale() {
         initComponents();
+        loadSalesTable();
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     /**
@@ -26,24 +100,25 @@ public class Sale extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
+        txtFromDate = new javax.swing.JTextField();
+        txtInvoiceNo = new javax.swing.JTextField();
+        txtToDate = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        salesTable = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        rdbDateRange = new javax.swing.JRadioButton();
+        jLabel6 = new javax.swing.JLabel();
+        rdbInvoice = new javax.swing.JRadioButton();
+        jButton6 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -51,41 +126,47 @@ public class Sale extends javax.swing.JFrame {
         jPanel1.setBackground(new java.awt.Color(174, 242, 242));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabel1.setText("Date Range:");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 40, 80, -1));
-
-        jLabel2.setText("Customer Name:");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 40, 100, -1));
-
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel3.setText("Search By:");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 80, -1));
-
-        jLabel4.setText("Invoice No:");
-        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 40, 80, -1));
-        jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 40, 100, -1));
-        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 40, 150, -1));
-        jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 40, 100, -1));
-        jPanel1.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 40, 150, -1));
+        jPanel1.add(txtFromDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 40, 100, -1));
+        jPanel1.add(txtInvoiceNo, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 40, 150, -1));
+        jPanel1.add(txtToDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 40, 100, -1));
 
         jLabel5.setText("TO");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 40, -1, -1));
+        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 40, -1, -1));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
+        salesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Invoice No.", "Date", "Name", "Items", "Amount"
+                "ID", "Invoice No.", "Customer ID", "Total Amount", "Total GST", "Net Amount", "Amount Paid", "Amount Due", "Payment Mode", "PDF Path", "Created At"
             }
-        ));
-        jScrollPane2.setViewportView(jTable1);
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane2.setViewportView(salesTable);
 
         jScrollPane1.setViewportView(jScrollPane2);
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 90, 910, 250));
 
         jButton1.setText("Export PDF");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 380, -1, -1));
 
         jButton2.setText("Delete Invoice");
@@ -96,15 +177,52 @@ public class Sale extends javax.swing.JFrame {
         });
         jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 380, -1, -1));
 
-        jButton3.setText("Close");
-        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 380, -1, -1));
+        jButton3.setBackground(new java.awt.Color(255, 102, 102));
+        jButton3.setText("RESET");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 40, -1, -1));
 
         jButton4.setText("View Details");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 380, -1, -1));
 
         jButton5.setBackground(new java.awt.Color(255, 255, 204));
         jButton5.setText("SEARCH");
-        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(870, 40, -1, -1));
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 40, -1, -1));
+
+        buttonGroup1.add(rdbDateRange);
+        rdbDateRange.setText("Date Range:");
+        jPanel1.add(rdbDateRange, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 40, -1, -1));
+
+        jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel6.setText("OR");
+        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 40, -1, -1));
+
+        buttonGroup1.add(rdbInvoice);
+        rdbInvoice.setSelected(true);
+        rdbInvoice.setText("Invoice No:");
+        jPanel1.add(rdbInvoice, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 40, -1, -1));
+
+        jButton6.setText("Close");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 380, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 960, 450));
 
@@ -113,7 +231,184 @@ public class Sale extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
+            int selectedRow = salesTable.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select an invoice to delete.");
+        return;
+    }
+
+    // Get hidden ID from the first column
+    int id = (int) salesTable.getModel().getValueAt(selectedRow, 0);
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to delete this invoice?",
+        "Confirm Delete",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm != JOptionPane.YES_OPTION) {
+        return;
+    }
+
+    Connection con = null;
+    PreparedStatement ps = null;
+
+    try {
+        con = ConnectionProvider.getCon();
+        String sql = "DELETE FROM sales WHERE id = ?";
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, id);
+
+        int rowsDeleted = ps.executeUpdate();
+        if (rowsDeleted > 0) {
+            JOptionPane.showMessageDialog(this, "Invoice deleted successfully!");
+            loadSalesTable(); // refresh table
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to delete invoice.");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error deleting invoice: " + e.getMessage());
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (con != null) con.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = salesTable.getSelectedRow();
+         if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a sale first!");
+        return;
+        }
+
+    // Get hidden pdf_path column (index 9 based on your table structure)
+    String pdfPath = (String) salesTable.getValueAt(selectedRow, 9);
+
+    if (pdfPath == null || pdfPath.trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "No PDF found for this invoice!");
+        return;
+    }
+
+    try {
+        File pdfFile = new File(pdfPath);
+        if (pdfFile.exists()) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(pdfFile); // opens in default PDF viewer
+            } else {
+                JOptionPane.showMessageDialog(this, "Desktop is not supported on this system!");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "PDF file not found at: " + pdfPath);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error opening PDF: " + e.getMessage());
+    }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        con = ConnectionProvider.getCon();
+        String sql = "";
+
+        if (rdbInvoice.isSelected()) {
+            // Search by invoice number
+            sql = "SELECT id, invoice_no, customer_id, total_amount, total_gst, net_amount, " +
+                  "amount_paid, amount_due, payment_mode, pdf_path, created_at " +
+                  "FROM sales WHERE invoice_no = ?";
+            ps = con.prepareStatement(sql);
+            ps.setString(1, txtInvoiceNo.getText().trim());
+
+        } else if (rdbDateRange.isSelected()) {
+            // Search by date range
+            sql = "SELECT id, invoice_no, customer_id, total_amount, total_gst, net_amount, " +
+                  "amount_paid, amount_due, payment_mode, pdf_path, created_at " +
+                  "FROM sales WHERE DATE(created_at) BETWEEN ? AND ?";
+            ps = con.prepareStatement(sql);
+            ps.setString(1, txtFromDate.getText().trim()); // Format: YYYY-MM-DD
+            ps.setString(2, txtToDate.getText().trim());   // Format: YYYY-MM-DD
+        }
+
+        rs = ps.executeQuery();
+
+        // Build new table model
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[]{
+                "ID", "Invoice No", "Customer ID", "Total Amount", "Total GST",
+                "Net Amount", "Amount Paid", "Amount Due", "Payment Mode",
+                "PDF Path", "Created At"
+            }, 0
+        );
+
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getInt("id"),
+                rs.getString("invoice_no"),
+                rs.getInt("customer_id"),
+                rs.getDouble("total_amount"),
+                rs.getDouble("total_gst"),
+                rs.getDouble("net_amount"),
+                rs.getDouble("amount_paid"),
+                rs.getDouble("amount_due"),
+                rs.getString("payment_mode"),
+                rs.getString("pdf_path"),
+                rs.getTimestamp("created_at")
+            });
+        }
+
+        salesTable.setModel(model);
+
+        // Hide ID and PDF Path
+        salesTable.getColumnModel().getColumn(0).setMinWidth(0);
+        salesTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        salesTable.getColumnModel().getColumn(0).setWidth(0);
+
+        salesTable.getColumnModel().getColumn(9).setMinWidth(0);
+        salesTable.getColumnModel().getColumn(9).setMaxWidth(0);
+        salesTable.getColumnModel().getColumn(9).setWidth(0);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error while searching: " + e.getMessage());
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+            if (con != null) con.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        loadSalesTable();
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        // TODO add your handling code here:
+        this.dispose();
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        SalesPDFExporter.exportTable(salesTable, this);
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -151,23 +446,24 @@ public class Sale extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
+    private javax.swing.JRadioButton rdbDateRange;
+    private javax.swing.JRadioButton rdbInvoice;
+    private javax.swing.JTable salesTable;
+    private javax.swing.JTextField txtFromDate;
+    private javax.swing.JTextField txtInvoiceNo;
+    private javax.swing.JTextField txtToDate;
     // End of variables declaration//GEN-END:variables
 }
