@@ -13,13 +13,14 @@ import IDgenerator.SalesIDGenerator;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
+import java.io.File;
 /**
  *
  * @author Tushar Kumar Das
  */
 public class saveBill {
-      public static void saveBill(JTable jTableBillItems, 
-                                JTextField jTextFieldCustomerName, 
+      public static void saveBill(JTable jTableBillItems,
+                                JTextField jTextFieldCustomerName,
                                 JTextField jTextFieldCustomerPhone,
                                 String paymentMode,
                                 double amountPaid) {
@@ -60,7 +61,7 @@ public class saveBill {
 
             // 2. Insert into sales
             String invoiceNo = SalesIDGenerator.generateInvoiceNo();
-            double totalAmount = BillingCalculator.calculateTotalAmount()-BillingCalculator.calculateTotalGST();
+            double totalAmount = BillingCalculator.calculateTotalAmount() - BillingCalculator.calculateTotalGST();
             double gstAmount   = BillingCalculator.calculateTotalGST();
             double netAmount   = BillingCalculator.calculateNetAmount();
 
@@ -86,6 +87,35 @@ public class saveBill {
             if (rs.next()) {
                 saleId = rs.getInt(1);
             }
+
+            // 2.1 Generate and save PDF
+            String pdfDir = "invoices"; // ensure this folder exists
+            File dir = new File(pdfDir);
+            if (!dir.exists()) dir.mkdirs();
+
+            String pdfPath = pdfDir + "/" + invoiceNo + ".pdf";
+
+            BillPDFGenerator.generatePDF(
+                jTableBillItems,
+                name,
+                phone,
+                invoiceNo,
+                totalAmount,
+                gstAmount,
+                netAmount,
+                amountPaid,
+                amountDue,
+                paymentMode,
+                pdfPath
+            );
+
+            // 2.2 Update sales with PDF path
+            String sqlUpdatePdf = "UPDATE sales SET pdf_path = ? WHERE id = ?";
+            PreparedStatement psPdf = con.prepareStatement(sqlUpdatePdf);
+            psPdf.setString(1, pdfPath);
+            psPdf.setInt(2, saleId);
+            psPdf.executeUpdate();
+            psPdf.close();
 
             // 3. Insert sales items
             String sqlItem = "INSERT INTO sales_items (sale_id, product_id, qty, sale_price, gst, gst_amount, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -124,6 +154,7 @@ public class saveBill {
                 ex.printStackTrace();
             }
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error saving bill: " + e.getMessage());
         } finally {
             try {
                 if (psSales != null) psSales.close();
