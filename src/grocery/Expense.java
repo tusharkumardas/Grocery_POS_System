@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.sql.ResultSet;
+import Project.ExpensePDFExporter;
 /**
  *
  * @author Tushar Kumar Das
@@ -223,7 +224,6 @@ private void clearExpenseFields() {
         jTextField2 = new javax.swing.JTextField();
         cmbPaymentMode = new javax.swing.JComboBox<>();
         cmbCategory = new javax.swing.JComboBox<>();
-        jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
@@ -234,7 +234,6 @@ private void clearExpenseFields() {
         txtDate = new javax.swing.JTextField();
         jTextField4 = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
-        jButton8 = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtDescription = new javax.swing.JTextArea();
@@ -278,13 +277,14 @@ private void clearExpenseFields() {
         cmbCategory.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--select--", "Shop Rent / Lease", "Electricity Bill", "Water Bill", "Internet / Phone", "Salaries & Wages", "Transportation / Delivery Charges", "Loading & Unloading Charges", "Packaging Materials ", "Repair & Maintenance", "Pest Control", "Security (CCTV, guards)", "Insurance", "Bank Charges", "Taxes (GST, Municipal, etc.)", "Licenses & Renewals", "Others" }));
         jPanel1.add(cmbCategory, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 50, -1, -1));
 
-        jButton1.setBackground(new java.awt.Color(153, 153, 255));
-        jButton1.setText("Update");
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 130, -1, -1));
-
         jButton2.setBackground(new java.awt.Color(255, 204, 204));
         jButton2.setText("Delete");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 130, -1, -1));
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 130, -1, -1));
 
         jButton3.setBackground(new java.awt.Color(204, 204, 255));
         jButton3.setText("Clear");
@@ -306,6 +306,11 @@ private void clearExpenseFields() {
 
         jButton5.setBackground(new java.awt.Color(204, 255, 204));
         jButton5.setText("Export PDF");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 410, -1, -1));
 
         jButton6.setBackground(new java.awt.Color(255, 51, 51));
@@ -315,7 +320,7 @@ private void clearExpenseFields() {
                 jButton6ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 410, -1, -1));
+        jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 410, -1, -1));
 
         jButton7.setBackground(new java.awt.Color(204, 255, 204));
         jButton7.setText("Add Expense");
@@ -333,10 +338,6 @@ private void clearExpenseFields() {
 
         jLabel9.setText("TO");
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 370, -1, -1));
-
-        jButton8.setBackground(new java.awt.Color(204, 255, 204));
-        jButton8.setText("Export Excel");
-        jPanel1.add(jButton8, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 410, -1, -1));
 
         jScrollPane3.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -386,7 +387,7 @@ private void clearExpenseFields() {
                 jButton9ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton9, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 410, -1, -1));
+        jPanel1.add(jButton9, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 410, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 930, 450));
 
@@ -456,6 +457,56 @@ private void clearExpenseFields() {
         clearExpenseFields();
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+            Connection con = null;
+    PreparedStatement ps = null;
+
+    try {
+        int selectedRow = expenseTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an expense to delete.");
+            return;
+        }
+
+        // Get expense ID (hidden column or hidden text field)
+        int id = Integer.parseInt(expenseTable.getValueAt(selectedRow, 0).toString());
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to delete this expense?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            con = ConnectionProvider.getCon();
+            String sql = "DELETE FROM expenses WHERE id=?";
+            ps = con.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                JOptionPane.showMessageDialog(this, "Expense deleted successfully!");
+                loadExpenseTable();   // Refresh data
+                clearExpenseFields(); // Clear fields
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete expense.");
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error deleting expense: " + e.getMessage());
+    } finally {
+        try { if (ps != null) ps.close(); if (con != null) con.close(); } catch (Exception ex) {}
+    }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        ExpensePDFExporter.exportToPDF(expenseTable);
+    }//GEN-LAST:event_jButton5ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -496,14 +547,12 @@ private void clearExpenseFields() {
     private javax.swing.JComboBox<String> cmbCategory;
     private javax.swing.JComboBox<String> cmbPaymentMode;
     private javax.swing.JTable expenseTable;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
     private javax.swing.JComboBox<String> jComboBox3;
     private javax.swing.JLabel jLabel1;
