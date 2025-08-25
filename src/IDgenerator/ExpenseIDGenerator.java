@@ -20,7 +20,7 @@ public class ExpenseIDGenerator {
         String year = String.valueOf(java.time.Year.now().getValue());
         int nextNumber = 1;
 
-        String sql = "SELECT invoice_no FROM expenses " +
+        String sql = "SELECT expense_code FROM expenses " +
                      "WHERE YEAR(created_at) = YEAR(CURDATE()) " +
                      "ORDER BY id DESC LIMIT 1";
 
@@ -30,7 +30,7 @@ public class ExpenseIDGenerator {
              ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) {
-                String lastID = rs.getString("expense_id");
+                String lastID = rs.getString("expense_code");
                 String[] parts = lastID.split("-");
                 if (parts.length == 3) {
                     nextNumber = Integer.parseInt(parts[2]) + 1;
