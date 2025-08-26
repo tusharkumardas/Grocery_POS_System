@@ -3,18 +3,172 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package grocery;
-
+import IDgenerator.PurchaseIDGenerator;
+import Project.ConnectionProvider;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.sql.ResultSet;
+import Project.ExpensePDFExporter;
 /**
  *
  * @author Tushar Kumar Das
  */
 public class Purchase extends javax.swing.JFrame {
+    public void loadPurchaseTable() {
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        con = ConnectionProvider.getCon();
+        String sql = "SELECT id, purchase_no, supplier_name, supplier_phone, total_amount, " +
+                     "total_gst, net_amount, amount_paid, amount_due, payment_mode, created_at " +
+                     "FROM purchases";
+        ps = con.prepareStatement(sql);
+        rs = ps.executeQuery();
+
+        // Table Model (columns match your table)
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[]{
+                "ID", "Purchase No", "Supplier Name", "Supplier Phone",
+                "Total Amount", "Total GST", "Net Amount",
+                "Amount Paid", "Amount Due", "Payment Mode", "Created At"
+            }, 0
+        );
+
+        // Fill data row by row
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getInt("id"),
+                rs.getString("purchase_no"),
+                rs.getString("supplier_name"),
+                rs.getString("supplier_phone"),
+                rs.getDouble("total_amount"),
+                rs.getDouble("total_gst"),
+                rs.getDouble("net_amount"),
+                rs.getDouble("amount_paid"),
+                rs.getDouble("amount_due"),
+                rs.getString("payment_mode"),
+                rs.getTimestamp("created_at")
+            });
+        }
+
+        // Set model into JTable
+        purchaseTable.setModel(model);
+
+        // Hide ID column (index 0)
+        purchaseTable.getColumnModel().getColumn(0).setMinWidth(0);
+        purchaseTable.getColumnModel().getColumn(0).setMaxWidth(0);
+        purchaseTable.getColumnModel().getColumn(0).setWidth(0);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error loading purchases: " + e.getMessage());
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+            if (con != null) con.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+}
+    private void addPurchase() {
+    // Generate ID
+    String purchaseNo = PurchaseIDGenerator.generatePurchaseID();
+
+    // ---- Date from JTextField ----
+    String dateStr = txtPurchaseDate.getText().trim();
+    if (dateStr.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please enter date (YYYY-MM-DD).");
+        return;
+    }
+    java.sql.Date purchaseDate;
+    try {
+        purchaseDate = java.sql.Date.valueOf(dateStr); // Works only for YYYY-MM-DD
+    } catch (IllegalArgumentException ex) {
+        JOptionPane.showMessageDialog(this, "Invalid date format! Use YYYY-MM-DD.");
+        return;
+    }
+
+    // ---- Other fields ----
+    String supplierName  = txtSupplierName.getText().trim();
+    String supplierPhone = txtSupplierPhone.getText().trim();
+    double totalAmount, totalGst, netAmount, amountPaid;
+
+    try {
+        totalAmount = Double.parseDouble(txtTotalAmount.getText().trim());
+        totalGst    = Double.parseDouble(txtTotalGST.getText().trim());
+        netAmount   = Double.parseDouble(txtNetAmount.getText().trim());
+        amountPaid  = Double.parseDouble(txtAmountPaid.getText().trim());
+    } catch (NumberFormatException nfe) {
+        JOptionPane.showMessageDialog(this, "Amounts must be valid numbers.");
+        return;
+    }
+    double amountDue = netAmount - amountPaid;
+    String paymentMode = cmbPaymentMode.getSelectedItem().toString();
+
+    // ---- Insert query ----
+    String sql = "INSERT INTO purchases (" +
+                 "purchase_no, purchase_date, supplier_name, supplier_phone, " +
+                 "total_amount, total_gst, net_amount, amount_paid, amount_due, payment_mode" +
+                 ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    try (Connection con = ConnectionProvider.getCon();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, purchaseNo);
+        ps.setDate(2, purchaseDate);   // <-- this will now work
+        ps.setString(3, supplierName);
+        ps.setString(4, supplierPhone);
+        ps.setDouble(5, totalAmount);
+        ps.setDouble(6, totalGst);
+        ps.setDouble(7, netAmount);
+        ps.setDouble(8, amountPaid);
+        ps.setDouble(9, amountDue);
+        ps.setString(10, paymentMode);
+
+        int rows = ps.executeUpdate();
+        if (rows > 0) {
+            JOptionPane.showMessageDialog(this, "Purchase added successfully!\nNo: " + purchaseNo);
+            loadPurchaseTable();
+
+            // ---- Clear fields ----
+            txtPurchaseDate.setText("");
+            txtSupplierName.setText("");
+            txtSupplierPhone.setText("");
+            txtTotalAmount.setText("");
+            txtTotalGST.setText("");
+            txtNetAmount.setText("");
+            txtAmountPaid.setText("");
+            txtAmountDue.setText("");
+            cmbPaymentMode.setSelectedIndex(0);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error adding purchase: " + e.getMessage());
+    }
+}
+private void clearPurchaseFields() {
+    txtPurchaseDate.setText("");  // reset JDateChooser
+    txtSupplierName.setText("");
+    txtSupplierPhone.setText("");
+    txtTotalAmount.setText("");
+    txtTotalGST.setText("");
+    txtNetAmount.setText("");
+    txtAmountPaid.setText("");
+    cmbPaymentMode.setSelectedIndex(0); // Reset to first option
+}
 
     /**
      * Creates new form Purchase
      */
     public Purchase() {
         initComponents();
+        loadPurchaseTable();
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
@@ -30,13 +184,13 @@ public class Purchase extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
+        txtSupplierPhone = new javax.swing.JTextField();
+        txtTotalAmount = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        jTextField3 = new javax.swing.JTextField();
+        txtSupplierName = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        purchaseTable = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
@@ -46,10 +200,16 @@ public class Purchase extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
-        jTextField4 = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
-        jTextField6 = new javax.swing.JTextField();
-        jTextField7 = new javax.swing.JTextField();
+        txtTotalGST = new javax.swing.JTextField();
+        txtNetAmount = new javax.swing.JTextField();
+        txtPurchaseDate = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
+        txtAmountPaid = new javax.swing.JTextField();
+        txtAmountDue = new javax.swing.JTextField();
+        jLabel10 = new javax.swing.JLabel();
+        cmbPaymentMode = new javax.swing.JComboBox<>();
+        jLabel11 = new javax.swing.JLabel();
+        jButton5 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -59,72 +219,117 @@ public class Purchase extends javax.swing.JFrame {
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel1.setText("Invoice No.:");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 20, 80, -1));
+        jLabel1.setText("Supplier Phone:");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 20, 100, -1));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel2.setText("Supplier:");
+        jLabel2.setText("Date:");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 20, 60, 20));
-        jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 10, 120, 30));
-        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 310, 110, 30));
+        jPanel1.add(txtSupplierPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 10, 120, 30));
+        jPanel1.add(txtTotalAmount, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 310, 110, 30));
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jLabel3.setText("Mob. No. :");
-        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 20, 70, -1));
-        jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 10, 150, 30));
+        jLabel3.setText("Supplier Name:");
+        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 20, 100, -1));
+        jPanel1.add(txtSupplierName, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 10, 150, 30));
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        purchaseTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                " ITEM CODE", "PRODUCT NAME", "QTY", "SALE PRICE", "MRP", "TOTAL"
+                " ID", "PURCHASE NO", "DATE", "SUPPLIER NAME", "SUPPLIER PHONE", "TOTAL AMOUNT", "TOTAL GST", "NET AMOUNT", "AMOUNT PAID", "AMOUNT DUE", "PAYMENT MODE", "CREATED AT"
             }
-        ));
-        jScrollPane2.setViewportView(jTable1);
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane2.setViewportView(purchaseTable);
 
         jScrollPane1.setViewportView(jScrollPane2);
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 70, 880, 210));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, 1100, 210));
 
         jButton1.setText("REMOVE ITEM");
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 440, -1, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 440, -1, -1));
 
         jButton2.setText("CLEAR");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(500, 440, -1, -1));
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 440, -1, -1));
 
-        jButton3.setText("GENERATE INVOICE");
-        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 440, -1, -1));
+        jButton3.setText("UPLOAD FILE");
+        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 380, -1, -1));
 
         jButton4.setText("ADD ITEM");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 440, -1, -1));
 
         jLabel4.setText("Summary");
         jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 290, -1, -1));
 
-        jLabel5.setText("Discount:");
+        jLabel5.setText("Total GST:");
         jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 320, -1, -1));
 
-        jLabel6.setText("Tax:");
+        jLabel6.setText("Net Amount:");
         jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 320, -1, -1));
 
-        jLabel7.setText("Total:");
-        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 320, -1, -1));
+        jLabel7.setText("Amount Due:");
+        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 320, -1, -1));
 
-        jLabel8.setText("Sub-Total:");
-        jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 320, -1, -1));
-        jPanel1.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 310, 110, 30));
-        jPanel1.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 310, 110, 30));
-        jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 310, 110, 30));
-        jPanel1.add(jTextField7, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 10, 110, 30));
+        jLabel8.setText("UPLOAD PURCHASE BILL:");
+        jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 380, -1, -1));
+        jPanel1.add(txtTotalGST, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 310, 110, 30));
+        jPanel1.add(txtNetAmount, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 310, 110, 30));
+        jPanel1.add(txtPurchaseDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 10, 110, 30));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 920, 500));
+        jLabel9.setText("Amount Paid:");
+        jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(650, 320, -1, -1));
+        jPanel1.add(txtAmountPaid, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 310, 110, 30));
+        jPanel1.add(txtAmountDue, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 310, 110, 30));
+
+        jLabel10.setText("Total Amount:");
+        jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 320, -1, -1));
+
+        cmbPaymentMode.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--select--", "CASH", "UPI", "CARDS" }));
+        jPanel1.add(cmbPaymentMode, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 380, 110, -1));
+
+        jLabel11.setText("PAYMENT MODE:");
+        jPanel1.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, -1));
+
+        jButton5.setText("GENERATE PDF");
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(820, 440, -1, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1130, 480));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+        addPurchase();
+        clearPurchaseFields();
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        clearPurchaseFields();
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -162,11 +367,15 @@ public class Purchase extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbPaymentMode;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -174,16 +383,18 @@ public class Purchase extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
-    private javax.swing.JTextField jTextField7;
+    private javax.swing.JTable purchaseTable;
+    private javax.swing.JTextField txtAmountDue;
+    private javax.swing.JTextField txtAmountPaid;
+    private javax.swing.JTextField txtNetAmount;
+    private javax.swing.JTextField txtPurchaseDate;
+    private javax.swing.JTextField txtSupplierName;
+    private javax.swing.JTextField txtSupplierPhone;
+    private javax.swing.JTextField txtTotalAmount;
+    private javax.swing.JTextField txtTotalGST;
     // End of variables declaration//GEN-END:variables
 }
