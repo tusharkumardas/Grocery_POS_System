@@ -3,18 +3,91 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package grocery;
+import Project.ConnectionProvider;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.sql.ResultSet;
 
 /**
  *
  * @author Tushar Kumar Das
  */
 public class Customer extends javax.swing.JFrame {
+    private void loadCustomers() {
+    DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+    model.setRowCount(0); // clear table before reloading
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT id, name, phone, created_at FROM customers ORDER BY id DESC";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            Object[] row = {
+                rs.getInt("id"),
+                rs.getString("name"),
+                rs.getString("phone"),
+                rs.getTimestamp("created_at")  // shows full date-time
+            };
+            model.addRow(row);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error loading customers: " + e.getMessage());
+    }
+}
+    private void searchCustomers(String keyword) {
+    DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+    model.setRowCount(0); // clear table
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT id, name, phone, created_at FROM customers " +
+                     "WHERE name LIKE ? OR phone LIKE ? ORDER BY id DESC";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setString(1, "%" + keyword + "%");
+        ps.setString(2, "%" + keyword + "%");
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            Object[] row = {
+                rs.getInt("id"),
+                rs.getString("name"),
+                rs.getString("phone"),
+                rs.getTimestamp("created_at")
+            };
+            model.addRow(row);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error searching customers: " + e.getMessage());
+    }
+}
+
 
     /**
      * Creates new form Customer
      */
     public Customer() {
         initComponents();
+        
+            // 🔹 Add key listener for live search
+        jTextField1.addKeyListener(new java.awt.event.KeyAdapter() {
+        public void keyReleased(java.awt.event.KeyEvent evt) {
+            String keyword = jTextField1.getText().trim();
+            if (keyword.isEmpty()) {
+                loadCustomers();
+            } else {
+                searchCustomers(keyword);
+            }
+        }
+    });
+        loadCustomers();
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     /**
@@ -30,16 +103,16 @@ public class Customer extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
+        jButton4 = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable2 = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(255, 204, 204));
+        jPanel1.setBackground(new java.awt.Color(174, 242, 242));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
@@ -51,31 +124,55 @@ public class Customer extends javax.swing.JFrame {
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 70, -1, -1));
         jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 70, 210, -1));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        jButton2.setText("CLOSE");
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 390, -1, -1));
+
+        jButton4.setText("VIEW HISTORY");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 390, -1, -1));
+
+        jTable2.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "ID", "NAME", "PHONE", "STATUS", "CREATED AT"
+                "CUSTOMER ID", "NAME", "PHONE NO", "CREATED AT"
             }
-        ));
-        jScrollPane1.setViewportView(jTable1);
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 130, 770, 190));
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane2.setViewportView(jTable2);
 
-        jButton1.setText("EXPORT PDF");
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 390, -1, -1));
+        jScrollPane1.setViewportView(jScrollPane2);
 
-        jButton2.setText("CLOSE");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 390, -1, -1));
-
-        jButton3.setText("VIEW HISTORY");
-        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 390, -1, -1));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 140, 780, 190));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 840, 450));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = jTable2.getSelectedRow();
+        if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a customer!");
+        return;
+    }
+
+    int customerId = Integer.parseInt(jTable2.getValueAt(selectedRow, 0).toString());
+    new CustomerDues(customerId).setVisible(true);
+    }//GEN-LAST:event_jButton4ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -113,14 +210,14 @@ public class Customer extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable jTable2;
     private javax.swing.JTextField jTextField1;
     // End of variables declaration//GEN-END:variables
 }
