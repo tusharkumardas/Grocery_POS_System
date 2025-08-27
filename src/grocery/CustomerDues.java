@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.sql.ResultSet;
+import java.awt.Desktop;       // For opening PDF with system viewer
+import java.io.File;  
 /**
  *
  * @author Tushar Kumar Das
@@ -47,6 +49,50 @@ public class CustomerDues extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "Error loading history: " + e.getMessage());
     }
 }
+private void viewInvoicePDF(String pdfPath) {
+    try {
+        if (pdfPath == null || pdfPath.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No PDF available for this invoice.");
+            return;
+        }
+
+        File file = new File(pdfPath);
+        if (!file.exists()) {
+            JOptionPane.showMessageDialog(this, "PDF file not found: " + pdfPath);
+            return;
+        }
+
+        // Open PDF with system default viewer
+        if (Desktop.isDesktopSupported()) {
+            Desktop.getDesktop().open(file);
+        } else {
+            JOptionPane.showMessageDialog(this, "Desktop is not supported on this system.");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error opening PDF: " + e.getMessage());
+    }
+}
+private void openInvoicePDFByInvoiceNo(String invoiceNo) {
+    String sql = "SELECT pdf_path FROM sales WHERE invoice_no = ?";
+    try (Connection con = ConnectionProvider.getCon();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, invoiceNo);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            String pdfPath = rs.getString("pdf_path");
+            viewInvoicePDF(pdfPath);
+        } else {
+            JOptionPane.showMessageDialog(this, "No record found for invoice " + invoiceNo);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error fetching PDF: " + e.getMessage());
+    }
+}
 
     /**
      * Creates new form CustomerDues
@@ -59,6 +105,18 @@ public class CustomerDues extends javax.swing.JFrame {
         initComponents();
         viewHistory(customerId);   // load history immediately
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        historyTable.addMouseListener(new java.awt.event.MouseAdapter() {
+    public void mouseClicked(java.awt.event.MouseEvent evt) {
+        if (evt.getClickCount() == 2) { // double-click
+            int row = historyTable.getSelectedRow();
+            if (row != -1) {
+                String invoiceNo = historyTable.getValueAt(row, 1).toString(); // Invoice No is column 1
+                openInvoicePDFByInvoiceNo(invoiceNo);
+            }
+        }
+    }
+});
+
     }
 
     /**
@@ -76,6 +134,7 @@ public class CustomerDues extends javax.swing.JFrame {
         historyTable = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -112,6 +171,9 @@ public class CustomerDues extends javax.swing.JFrame {
 
         jButton3.setText("EXPORT EXCEL");
         jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 350, -1, -1));
+
+        jLabel2.setText("*Double Click on a row to view its Invoice Details");
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 40, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 910, 410));
 
@@ -158,6 +220,7 @@ public class CustomerDues extends javax.swing.JFrame {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
