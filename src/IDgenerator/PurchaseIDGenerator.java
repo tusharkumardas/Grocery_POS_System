@@ -20,7 +20,7 @@ public class PurchaseIDGenerator {
         String year = String.valueOf(java.time.Year.now().getValue());
         int nextNumber = 1;
 
-        String sql = "SELECT invoice_no FROM purchases " +
+        String sql = "SELECT purchase_no FROM purchases " +
                      "WHERE YEAR(created_at) = YEAR(CURDATE()) " +
                      "ORDER BY id DESC LIMIT 1";
 
@@ -30,7 +30,7 @@ public class PurchaseIDGenerator {
              ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) {
-                String lastID = rs.getString("purchase_id");
+                String lastID = rs.getString("purchase_no");
                 String[] parts = lastID.split("-");
                 if (parts.length == 3) {
                     nextNumber = Integer.parseInt(parts[2]) + 1;
