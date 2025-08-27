@@ -10,7 +10,12 @@ import java.sql.PreparedStatement;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import java.sql.ResultSet;
-import Project.ExpensePDFExporter;
+import Project.PurchasePDFExporter;
+import javax.swing.JFileChooser;
+import java.nio.file.Files;                 // For copying files
+import java.nio.file.StandardCopyOption;
+import java.io.File;    
+import java.awt.Desktop;
 /**
  *
  * @author Tushar Kumar Das
@@ -24,7 +29,7 @@ public class Purchase extends javax.swing.JFrame {
     try {
         con = ConnectionProvider.getCon();
         String sql = "SELECT id, purchase_no, supplier_name, supplier_phone, total_amount, " +
-                     "total_gst, net_amount, amount_paid, amount_due, payment_mode, created_at " +
+                     "total_gst, net_amount, amount_paid, amount_due, payment_mode, created_at, bill_path " +
                      "FROM purchases";
         ps = con.prepareStatement(sql);
         rs = ps.executeQuery();
@@ -34,7 +39,7 @@ public class Purchase extends javax.swing.JFrame {
             new Object[]{
                 "ID", "Purchase No", "Supplier Name", "Supplier Phone",
                 "Total Amount", "Total GST", "Net Amount",
-                "Amount Paid", "Amount Due", "Payment Mode", "Created At"
+                "Amount Paid", "Amount Due", "Payment Mode", "Created At","Bill Path"
             }, 0
         );
 
@@ -51,7 +56,8 @@ public class Purchase extends javax.swing.JFrame {
                 rs.getDouble("amount_paid"),
                 rs.getDouble("amount_due"),
                 rs.getString("payment_mode"),
-                rs.getTimestamp("created_at")
+                rs.getTimestamp("created_at"),
+                rs.getString("bill_path")
             });
         }
 
@@ -62,6 +68,10 @@ public class Purchase extends javax.swing.JFrame {
         purchaseTable.getColumnModel().getColumn(0).setMinWidth(0);
         purchaseTable.getColumnModel().getColumn(0).setMaxWidth(0);
         purchaseTable.getColumnModel().getColumn(0).setWidth(0);
+        
+        purchaseTable.getColumnModel().getColumn(11).setMinWidth(0);
+        purchaseTable.getColumnModel().getColumn(11).setMaxWidth(0);
+        purchaseTable.getColumnModel().getColumn(11).setWidth(0);
 
     } catch (Exception e) {
         e.printStackTrace();
@@ -162,6 +172,53 @@ private void clearPurchaseFields() {
     txtAmountPaid.setText("");
     cmbPaymentMode.setSelectedIndex(0); // Reset to first option
 }
+private void deletePurchase() {
+    int selectedRow = purchaseTable.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a record to delete.");
+        return;
+    }
+
+    // Get purchase_no from JTable (assuming it's column index 1)
+    String purchaseNo = purchaseTable.getValueAt(selectedRow, 1).toString();
+
+    int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to delete Purchase No: " + purchaseNo + "?",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = ConnectionProvider.getCon();
+            String sql = "DELETE FROM purchases WHERE purchase_no = ?";
+            ps = con.prepareStatement(sql);
+            ps.setString(1, purchaseNo);
+
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                JOptionPane.showMessageDialog(this, "Purchase deleted successfully!");
+                loadPurchaseTable(); // refresh table
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete purchase!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error deleting purchase: " + e.getMessage());
+        } finally {
+            try {
+                if (ps != null) ps.close();
+                if (con != null) con.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+}
 
     /**
      * Creates new form Purchase
@@ -210,6 +267,7 @@ private void clearPurchaseFields() {
         cmbPaymentMode = new javax.swing.JComboBox<>();
         jLabel11 = new javax.swing.JLabel();
         jButton5 = new javax.swing.JButton();
+        jButton6 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -241,11 +299,11 @@ private void clearPurchaseFields() {
 
             },
             new String [] {
-                " ID", "PURCHASE NO", "DATE", "SUPPLIER NAME", "SUPPLIER PHONE", "TOTAL AMOUNT", "TOTAL GST", "NET AMOUNT", "AMOUNT PAID", "AMOUNT DUE", "PAYMENT MODE", "CREATED AT"
+                " ID", "PURCHASE NO", "DATE", "SUPPLIER NAME", "SUPPLIER PHONE", "TOTAL AMOUNT", "TOTAL GST", "NET AMOUNT", "AMOUNT PAID", "AMOUNT DUE", "PAYMENT MODE", "CREATED AT", "BILL PATH"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -258,27 +316,37 @@ private void clearPurchaseFields() {
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 70, 1100, 210));
 
-        jButton1.setText("REMOVE ITEM");
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 440, -1, -1));
+        jButton1.setText("DELETE");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 440, -1, -1));
 
-        jButton2.setText("CLEAR");
+        jButton2.setText("VIEW DETAILS");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 440, -1, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 440, -1, -1));
 
         jButton3.setText("UPLOAD FILE");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 380, -1, -1));
 
-        jButton4.setText("ADD ITEM");
+        jButton4.setText("ADD");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton4ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 440, -1, -1));
+        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 440, -1, -1));
 
         jLabel4.setText("Summary");
         jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 290, -1, -1));
@@ -313,7 +381,20 @@ private void clearPurchaseFields() {
         jPanel1.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, -1));
 
         jButton5.setText("GENERATE PDF");
-        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(820, 440, -1, -1));
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(880, 440, -1, -1));
+
+        jButton6.setText("CLEAR");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 440, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1130, 480));
 
@@ -328,8 +409,122 @@ private void clearPurchaseFields() {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
-        clearPurchaseFields();
+         try {
+        int selectedRow = purchaseTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a purchase record first!");
+            return;
+        }
+
+        // bill_path is stored in column 10 (hidden one in loadPurchaseTable)
+        String billPath = purchaseTable.getModel().getValueAt(selectedRow, 11).toString();
+
+        if (billPath == null || billPath.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No bill uploaded for this purchase!");
+            return;
+        }
+
+        File billFile = new File(billPath);
+        if (!billFile.exists()) {
+            JOptionPane.showMessageDialog(this, "Bill file not found!\n" + billPath);
+            return;
+        }
+
+        // Open with default system viewer
+        if (Desktop.isDesktopSupported()) {
+            Desktop.getDesktop().open(billFile);
+        } else {
+            JOptionPane.showMessageDialog(this, "Desktop not supported. Cannot open file.");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error opening bill: " + e.getMessage());
+    }
+        
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        deletePurchase();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        PurchasePDFExporter.exportTableToPDF(purchaseTable);
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+       try {
+        // Select file
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select Purchase Bill");
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return; // user cancelled
+        }
+
+        File selectedFile = fileChooser.getSelectedFile();
+
+        // Ensure a row is selected in JTable
+        int selectedRow = purchaseTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a purchase record first!");
+            return;
+        }
+
+        // Get purchase number from table (assuming column index 1 is purchase_no)
+        String purchaseNo = purchaseTable.getValueAt(selectedRow, 1).toString();
+
+        // Create "bills" folder inside project directory if not exists
+        File billsDir = new File("bills");
+        if (!billsDir.exists()) {
+            billsDir.mkdirs();
+        }
+
+        // Keep original extension (.pdf, .jpg, etc.)
+        String extension = "";
+        int dotIndex = selectedFile.getName().lastIndexOf(".");
+        if (dotIndex >= 0) {
+            extension = selectedFile.getName().substring(dotIndex);
+        }
+
+        // Save file as purchaseNo.extension
+        File destFile = new File(billsDir, purchaseNo + extension);
+
+        // Copy file into bills folder
+        Files.copy(
+            selectedFile.toPath(),
+            destFile.toPath(),
+            StandardCopyOption.REPLACE_EXISTING
+        );
+
+        // Update DB with the stored path
+        try (Connection con = ConnectionProvider.getCon();
+             PreparedStatement ps = con.prepareStatement("UPDATE purchases SET bill_path = ? WHERE purchase_no = ?")) {
+
+            ps.setString(1, destFile.getAbsolutePath());
+            ps.setString(2, purchaseNo);
+
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                JOptionPane.showMessageDialog(this, "Bill uploaded and saved inside project/bills folder!");
+                loadPurchaseTable();
+            }
+        }
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error uploading bill: " + ex.getMessage());
+    }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        // TODO add your handling code here:
+        clearPurchaseFields();
+    }//GEN-LAST:event_jButton6ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -373,6 +568,7 @@ private void clearPurchaseFields() {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;

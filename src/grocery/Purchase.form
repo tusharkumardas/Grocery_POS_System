@@ -127,7 +127,7 @@
                 <Component class="javax.swing.JTable" name="purchaseTable">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                      <Table columnCount="12" rowCount="0">
+                      <Table columnCount="13" rowCount="0">
                         <Column editable="false" title=" ID" type="java.lang.Object"/>
                         <Column editable="false" title="PURCHASE NO" type="java.lang.Object"/>
                         <Column editable="false" title="DATE" type="java.lang.Object"/>
@@ -140,6 +140,7 @@
                         <Column editable="false" title="AMOUNT DUE" type="java.lang.Object"/>
                         <Column editable="false" title="PAYMENT MODE" type="java.lang.Object"/>
                         <Column editable="false" title="CREATED AT" type="java.lang.Object"/>
+                        <Column editable="false" title="BILL PATH" type="java.lang.Object"/>
                       </Table>
                     </Property>
                   </Properties>
@@ -150,24 +151,27 @@
         </Container>
         <Component class="javax.swing.JButton" name="jButton1">
           <Properties>
-            <Property name="text" type="java.lang.String" value="REMOVE ITEM"/>
+            <Property name="text" type="java.lang.String" value="DELETE"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+          </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="370" y="440" width="-1" height="-1"/>
+              <AbsoluteConstraints x="470" y="440" width="-1" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
         <Component class="javax.swing.JButton" name="jButton2">
           <Properties>
-            <Property name="text" type="java.lang.String" value="CLEAR"/>
+            <Property name="text" type="java.lang.String" value="VIEW DETAILS"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton2ActionPerformed"/>
           </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="620" y="440" width="-1" height="-1"/>
+              <AbsoluteConstraints x="60" y="440" width="-1" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -175,6 +179,9 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="UPLOAD FILE"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton3ActionPerformed"/>
+          </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
               <AbsoluteConstraints x="400" y="380" width="-1" height="-1"/>
@@ -183,14 +190,14 @@
         </Component>
         <Component class="javax.swing.JButton" name="jButton4">
           <Properties>
-            <Property name="text" type="java.lang.String" value="ADD ITEM"/>
+            <Property name="text" type="java.lang.String" value="ADD"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton4ActionPerformed"/>
           </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="120" y="440" width="-1" height="-1"/>
+              <AbsoluteConstraints x="270" y="440" width="-1" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -333,9 +340,25 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="GENERATE PDF"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton5ActionPerformed"/>
+          </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="820" y="440" width="-1" height="-1"/>
+              <AbsoluteConstraints x="880" y="440" width="-1" height="-1"/>
+            </Constraint>
+          </Constraints>
+        </Component>
+        <Component class="javax.swing.JButton" name="jButton6">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="CLEAR"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton6ActionPerformed"/>
+          </Events>
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+              <AbsoluteConstraints x="680" y="440" width="-1" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
