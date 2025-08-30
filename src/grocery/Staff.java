@@ -4,17 +4,84 @@
  */
 package grocery;
 
+import Project.ConnectionProvider;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 /**
  *
  * @author Tushar Kumar Das
  */
 public class Staff extends javax.swing.JFrame {
+     private void addStaff() {
+    String staffId = jTextField8.getText();
+    String name = jTextField1.getText();
+    String dob = jTextField2.getText();  // format: yyyy-mm-dd
+    String phone = jTextField3.getText();
+    String email = jTextField4.getText();
+    String role = jComboBox1.getSelectedItem().toString();
+    String salary = jTextField5.getText();
+    String joinDate = jTextField9.getText(); // format: yyyy-mm-dd
+    String govtId = jTextField6.getText();
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "INSERT INTO staff (staff_code, name, dob, phone, email, role, salary, join_date, govt_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, staffId);
+        pst.setString(2, name);
+        pst.setString(3, dob);
+        pst.setString(4, phone);
+        pst.setString(5, email);
+        pst.setString(6, role);
+        pst.setString(7, salary);
+        pst.setString(8, joinDate);
+        pst.setString(9, govtId);
+
+        pst.executeUpdate();
+        javax.swing.JOptionPane.showMessageDialog(this, "Staff added successfully!");
+
+        loadStaffTable(); // refresh table
+    } catch (Exception e) {
+        e.printStackTrace();
+        javax.swing.JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }
+}
+
+     private void loadStaffTable() {
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT staff_code, name, dob, phone, email, role, salary, join_date, govt_id FROM staff";
+        PreparedStatement pst = con.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) jTable2.getModel();
+        model.setRowCount(0); // clear table
+
+        while (rs.next()) {
+            Object[] row = {
+                rs.getString("staff_code"),
+                rs.getString("name"),
+                rs.getString("dob"),
+                rs.getString("phone"),
+                rs.getString("email"),
+                rs.getString("role"),
+                rs.getString("salary"),
+                rs.getString("join_date"),
+                rs.getString("govt_id")
+            };
+            model.addRow(row);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 
     /**
      * Creates new form Staff
      */
     public Staff() {
         initComponents();
+        loadStaffTable();
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     /**
@@ -43,20 +110,21 @@ public class Staff extends javax.swing.JFrame {
         jTextField4 = new javax.swing.JTextField();
         jTextField5 = new javax.swing.JTextField();
         jTextField6 = new javax.swing.JTextField();
-        jTextField7 = new javax.swing.JTextField();
         jTextField8 = new javax.swing.JTextField();
         jComboBox1 = new javax.swing.JComboBox<>();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable2 = new javax.swing.JTable();
+        jButton5 = new javax.swing.JButton();
+        jTextField9 = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.setBackground(new java.awt.Color(255, 204, 153));
+        jPanel1.setBackground(new java.awt.Color(174, 242, 242));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
@@ -94,8 +162,7 @@ public class Staff extends javax.swing.JFrame {
         jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 180, 130, -1));
         jPanel1.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 220, 130, -1));
         jPanel1.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 310, 130, -1));
-        jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 350, 130, -1));
-        jPanel1.add(jTextField7, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 390, 130, -1));
+        jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 390, 130, -1));
         jPanel1.add(jTextField8, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 40, 130, -1));
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--select--", "ADMIN", "CASHIER", "MANAGER" }));
@@ -110,28 +177,47 @@ public class Staff extends javax.swing.JFrame {
         jButton3.setText("DELETE");
         jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 420, -1, -1));
 
-        jButton4.setText("ADD");
-        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 420, -1, -1));
+        jButton4.setText("BROWSE");
+        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 420, 80, -1));
 
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        jTable2.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "ID", "NAME", "PHONE", "ROLE", "STATUS"
+                "STAFF ID", "NAME", "D.O.B.", "PHONE NO.", "E-MAIL", "ROLE", "SALARY", "JOIN DATE", "GOVT. ID."
             }
-        ));
-        jScrollPane1.setViewportView(jTable1);
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false
+            };
 
-        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 40, 620, 320));
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane2.setViewportView(jTable2);
+
+        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 50, 640, 350));
+
+        jButton5.setText("ADD");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 420, -1, -1));
+        jPanel1.add(jTextField9, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 350, 130, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 460));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        addStaff();
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -173,6 +259,7 @@ public class Staff extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -185,15 +272,15 @@ public class Staff extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable jTable2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
-    private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField jTextField8;
+    private javax.swing.JTextField jTextField9;
     // End of variables declaration//GEN-END:variables
 }
