@@ -8,13 +8,23 @@ import Project.ConnectionProvider;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import IDgenerator.StaffIDGenerator;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.JOptionPane;
+import java.awt.Desktop;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 /**
  *
  * @author Tushar Kumar Das
  */
 public class Staff extends javax.swing.JFrame {
-     private void addStaff() {
-    String staffId = jTextField8.getText();
+    private void addStaff() {
+    String staffId = StaffIDGenerator.generateStaffID(); // generate ID
     String name = jTextField1.getText();
     String dob = jTextField2.getText();  // format: yyyy-mm-dd
     String phone = jTextField3.getText();
@@ -24,8 +34,14 @@ public class Staff extends javax.swing.JFrame {
     String joinDate = jTextField9.getText(); // format: yyyy-mm-dd
     String govtId = jTextField6.getText();
 
+    // Basic validation
+    if (name.isEmpty() || dob.isEmpty() || phone.isEmpty() || email.isEmpty() || "--select--".equals(role)) {
+        javax.swing.JOptionPane.showMessageDialog(this, "Please fill all required fields!");
+        return;
+    }
+
     try (Connection con = ConnectionProvider.getCon()) {
-        String sql = "INSERT INTO staff (staff_code, name, dob, phone, email, role, salary, join_date, govt_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO staff (staff_code, name, dob, phone, email, role, salary, join_date, govt_id_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement pst = con.prepareStatement(sql);
         pst.setString(1, staffId);
         pst.setString(2, name);
@@ -38,7 +54,7 @@ public class Staff extends javax.swing.JFrame {
         pst.setString(9, govtId);
 
         pst.executeUpdate();
-        javax.swing.JOptionPane.showMessageDialog(this, "Staff added successfully!");
+        javax.swing.JOptionPane.showMessageDialog(this, "Staff added successfully! ID: " + staffId);
 
         loadStaffTable(); // refresh table
     } catch (Exception e) {
@@ -47,9 +63,10 @@ public class Staff extends javax.swing.JFrame {
     }
 }
 
+
      private void loadStaffTable() {
     try (Connection con = ConnectionProvider.getCon()) {
-        String sql = "SELECT staff_code, name, dob, phone, email, role, salary, join_date, govt_id FROM staff";
+        String sql = "SELECT staff_code, name, dob, phone, email, role, salary, join_date, govt_id_path FROM staff";
         PreparedStatement pst = con.prepareStatement(sql);
         ResultSet rs = pst.executeQuery();
 
@@ -66,7 +83,7 @@ public class Staff extends javax.swing.JFrame {
                 rs.getString("role"),
                 rs.getString("salary"),
                 rs.getString("join_date"),
-                rs.getString("govt_id")
+                rs.getString("govt_id_path")
             };
             model.addRow(row);
         }
@@ -74,6 +91,92 @@ public class Staff extends javax.swing.JFrame {
         e.printStackTrace();
     }
 }
+ private void clearFields() {
+    // Text fields on the left
+    if (jTextField1 != null) jTextField1.setText(""); // Name
+    if (jTextField2 != null) jTextField2.setText(""); // DOB (yyyy-mm-dd)
+    if (jTextField3 != null) jTextField3.setText(""); // Phone
+    if (jTextField4 != null) jTextField4.setText(""); // Email
+    if (jTextField5 != null) jTextField5.setText(""); // Salary
+    if (jTextField9 != null) jTextField9.setText(""); // Join Date (yyyy-mm-dd)
+    if (jTextField6 != null) jTextField6.setText(""); // Govt ID path
+
+    // If you still have the (hidden) Staff ID text field in the form:
+    // if (jTextField8 != null) jTextField8.setText("");
+
+    // Role dropdown
+    if (jComboBox1 != null) jComboBox1.setSelectedIndex(0); // --select--
+
+    // Clear any table selection
+    if (jTable2 != null) jTable2.clearSelection();
+}
+private void updateStaff() {
+    int selectedRow = jTable2.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a staff record to update.");
+        return;
+    }
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        // Get staff_code from JTable
+        String staffCode = (String) jTable2.getValueAt(selectedRow, 0);
+
+        // Get current DB values from JTable row
+        String oldName = jTable2.getValueAt(selectedRow, 1).toString();
+        String oldDob = jTable2.getValueAt(selectedRow, 2) != null ? jTable2.getValueAt(selectedRow, 2).toString() : "";
+        String oldPhone = jTable2.getValueAt(selectedRow, 3) != null ? jTable2.getValueAt(selectedRow, 3).toString() : "";
+        String oldEmail = jTable2.getValueAt(selectedRow, 4) != null ? jTable2.getValueAt(selectedRow, 4).toString() : "";
+        String oldRole = jTable2.getValueAt(selectedRow, 5) != null ? jTable2.getValueAt(selectedRow, 5).toString() : "";
+        String oldSalary = jTable2.getValueAt(selectedRow, 6) != null ? jTable2.getValueAt(selectedRow, 6).toString() : "0";
+        String oldJoinDate = jTable2.getValueAt(selectedRow, 7) != null ? jTable2.getValueAt(selectedRow, 7).toString() : "";
+        String oldGovtId = jTable2.getValueAt(selectedRow, 8) != null ? jTable2.getValueAt(selectedRow, 8).toString() : "";
+
+        // Collect new form values (if empty, keep old)
+        String name = jTextField1.getText().trim().isEmpty() ? oldName : jTextField1.getText().trim();
+        String dob = jTextField2.getText().trim().isEmpty() ? oldDob : jTextField2.getText().trim();
+        String phone = jTextField3.getText().trim().isEmpty() ? oldPhone : jTextField3.getText().trim();
+        String email = jTextField4.getText().trim().isEmpty() ? oldEmail : jTextField4.getText().trim();
+        String role = (jComboBox1.getSelectedItem() == null || jComboBox1.getSelectedItem().toString().equals("--select--")) 
+                        ? oldRole : jComboBox1.getSelectedItem().toString();
+        String salaryStr = jTextField5.getText().trim().isEmpty() ? oldSalary : jTextField5.getText().trim();
+        String joinDate = jTextField9.getText().trim().isEmpty() ? oldJoinDate : jTextField9.getText().trim();
+        String govtIdPath = jTextField6.getText().trim().isEmpty() ? oldGovtId : jTextField6.getText().trim();
+
+        double salary = Double.parseDouble(salaryStr);
+
+        // SQL Update query
+        String sql = "UPDATE staff SET name=?, dob=?, phone=?, email=?, role=?, salary=?, join_date=?, govt_id_path=?, updated_at=NOW() WHERE staff_code=?";
+
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, name);
+        pst.setString(2, dob.isEmpty() ? null : dob);
+        pst.setString(3, phone.isEmpty() ? null : phone);
+        pst.setString(4, email.isEmpty() ? null : email);
+        pst.setString(5, role);
+        pst.setDouble(6, salary);
+        pst.setString(7, joinDate.isEmpty() ? null : joinDate);
+        pst.setString(8, govtIdPath);
+        pst.setString(9, staffCode);
+
+        int rowsAffected = pst.executeUpdate();
+
+        if (rowsAffected > 0) {
+            JOptionPane.showMessageDialog(this, "Staff updated successfully!");
+            loadStaffTable();
+            clearFields();
+        } else {
+            JOptionPane.showMessageDialog(this, "Update failed!");
+        }
+
+        pst.close();
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error updating staff: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+
 
     /**
      * Creates new form Staff
@@ -81,6 +184,18 @@ public class Staff extends javax.swing.JFrame {
     public Staff() {
         initComponents();
         loadStaffTable();
+        jTable2.addMouseListener(new java.awt.event.MouseAdapter() {
+    @Override
+    public void mouseClicked(java.awt.event.MouseEvent evt) {
+        if (evt.getClickCount() == 2) {  // double-click
+            int row = jTable2.getSelectedRow();
+            if (row != -1) {
+                openGovtIdPdf(row);
+            }
+        }
+    }
+});
+
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
@@ -103,14 +218,12 @@ public class Staff extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
         jTextField3 = new javax.swing.JTextField();
         jTextField4 = new javax.swing.JTextField();
         jTextField5 = new javax.swing.JTextField();
         jTextField6 = new javax.swing.JTextField();
-        jTextField8 = new javax.swing.JTextField();
         jComboBox1 = new javax.swing.JComboBox<>();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
@@ -154,30 +267,48 @@ public class Staff extends javax.swing.JFrame {
 
         jLabel9.setText("GOVT ID:");
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 390, -1, -1));
-
-        jLabel10.setText("Staff ID:");
-        jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 50, -1, -1));
         jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 90, 130, -1));
         jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 140, 130, -1));
         jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 180, 130, -1));
         jPanel1.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 220, 130, -1));
         jPanel1.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 310, 130, -1));
+
+        jTextField6.setEditable(false);
         jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 390, 130, -1));
-        jPanel1.add(jTextField8, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 40, 130, -1));
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--select--", "ADMIN", "CASHIER", "MANAGER" }));
         jPanel1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 270, 130, -1));
 
         jButton1.setText("UPDATE");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(500, 420, -1, -1));
 
         jButton2.setText("CLEAR");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 420, -1, -1));
 
         jButton3.setText("DELETE");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 420, -1, -1));
 
         jButton4.setText("BROWSE");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 420, 80, -1));
 
         jTable2.setModel(new javax.swing.table.DefaultTableModel(
@@ -218,6 +349,109 @@ public class Staff extends javax.swing.JFrame {
         // TODO add your handling code here:
         addStaff();
     }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+        try {
+        // Open file chooser
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select Government ID PDF");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Documents", "pdf"));
+
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+
+            // Fixed destination folder
+            String destDir = "C:/GroceryApp/StaffDocs/";
+            File dir = new File(destDir);
+            if (!dir.exists()) {
+                dir.mkdirs(); // create folder if not exists
+            }
+
+            // Destination file with timestamp to avoid overwrite
+            String newFileName = System.currentTimeMillis() + "_" + selectedFile.getName();
+            File destFile = new File(destDir + newFileName);
+
+            // Copy file
+            Files.copy(selectedFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            // Save the path in textfield (hidden or readonly)
+            jTextField6.setText(destFile.getAbsolutePath());
+
+            JOptionPane.showMessageDialog(this, "File uploaded successfully!");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error uploading file: " + e.getMessage());
+    }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        clearFields();
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        try {
+        int row = jTable2.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a staff member to delete!");
+            return;
+        }
+
+        String staffId = (String) jTable2.getValueAt(row, 0);
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this staff?", "Confirm", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            Connection con = ConnectionProvider.getCon();
+            String sql = "DELETE FROM staff WHERE staff_code=?";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, staffId);
+            pst.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Staff deleted successfully!");
+            loadStaffTable();
+            clearFields();
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error deleting staff: " + e.getMessage());
+    }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+         updateStaff();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void openGovtIdPdf(int row) {
+    try {
+        // Assuming "govt_id_path" is in column 8 (adjust index if different)
+        String filePath = (String) jTable2.getValueAt(row, 8);
+
+        if (filePath != null && !filePath.trim().isEmpty()) {
+            File file = new File(filePath);
+            if (file.exists()) {
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(file);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Desktop not supported on this system.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "File not found: " + filePath);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "No Govt. ID file uploaded for this staff.");
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error opening file: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
 
     /**
      * @param args the command line arguments
@@ -262,7 +496,6 @@ public class Staff extends javax.swing.JFrame {
     private javax.swing.JButton jButton5;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -280,7 +513,6 @@ public class Staff extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
-    private javax.swing.JTextField jTextField8;
     private javax.swing.JTextField jTextField9;
     // End of variables declaration//GEN-END:variables
 }
