@@ -4,6 +4,7 @@
  */
 package grocery;
 import grocery.ProductEntry;
+import javax.swing.JOptionPane;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
@@ -19,6 +20,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.JTable;
 import java.sql.ResultSet;
 import Project.BillGenerator;
+import Project.BillingCalculator;
+import Project.saveBill;
 
 
 /**
@@ -36,6 +39,13 @@ public class NewJFrame extends javax.swing.JFrame {
 
     if (text.isEmpty()) {
         scrollPane.setVisible(false);
+        return;
+    }
+    
+    // 🔥 BARCODE SCANNER HANDLING
+    // Most barcodes are numeric and length >= 8
+    if (text.matches("\\d{8,}")) {
+        autoAddByBarcode(text);
         return;
     }
 
@@ -61,22 +71,24 @@ public class NewJFrame extends javax.swing.JFrame {
     }
 }
 
-    
-    private void fillProductTable(String selectedValue) {
-    if (selectedValue == null || selectedValue.isEmpty()) return;
-
-    String itemCode = selectedValue.split(" - ")[0].trim();
+    private void autoAddByBarcode(String barcode) {
+    if (barcode == null || barcode.isEmpty()) return;
 
     try (Connection con = ConnectionProvider.getCon()) {
-        String sql = "SELECT item_code, product_name, sale_price, mrp FROM products WHERE item_code = ?";
+
+        String sql = "SELECT id, item_code, product_name, sale_price, gst, mrp " +
+                     "FROM products WHERE barcode = ?";
         PreparedStatement pst = con.prepareStatement(sql);
-        pst.setString(1, itemCode);
+        pst.setString(1, barcode);
 
         ResultSet rs = pst.executeQuery();
+
         if (rs.next()) {
+            int productId = rs.getInt("id");
             String code = rs.getString("item_code");
             String name = rs.getString("product_name");
             double sale = rs.getDouble("sale_price");
+            double gst = rs.getDouble("gst");
             double mrp = rs.getDouble("mrp");
 
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
@@ -88,12 +100,12 @@ public class NewJFrame extends javax.swing.JFrame {
             boolean found = false;
 
             for (int i = 0; i < model.getRowCount(); i++) {
-                String existingCode = model.getValueAt(i, 0).toString();
+                String existingCode = model.getValueAt(i, 1).toString();
                 if (existingCode.equals(code)) {
-                    int existingQty = Integer.parseInt(model.getValueAt(i, 2).toString());
+                    int existingQty = Integer.parseInt(model.getValueAt(i, 3).toString());
                     existingQty++;
-                    model.setValueAt(existingQty, i, 2); // Qty
-                    model.setValueAt(existingQty * sale, i, 5); // Total = qty * sale
+                    model.setValueAt(existingQty, i, 3);           // Qty
+                    model.setValueAt(existingQty * sale, i, 7);    // Total
                     found = true;
                     break;
                 }
@@ -102,7 +114,66 @@ public class NewJFrame extends javax.swing.JFrame {
             if (!found) {
                 int qty = 1;
                 double total = sale;
-                model.addRow(new Object[]{code, name, qty, sale, mrp, total});
+                model.addRow(new Object[]{
+                    productId, code, name, qty, sale, gst, mrp, total
+                });
+            }
+
+        } else {
+            System.out.println("No product found for barcode: " + barcode);
+        }
+
+        // Clear search for next scan
+        jTextFieldSearch.setText("");
+        scrollPane.setVisible(false);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+    private void fillProductTable(String selectedValue) {
+    if (selectedValue == null || selectedValue.isEmpty()) return;
+
+    String itemCode = selectedValue.split(" - ")[0].trim();
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT id, item_code, product_name, sale_price, gst, mrp FROM products WHERE item_code = ?";
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, itemCode);
+
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            int productId = rs.getInt("id");
+            String code = rs.getString("item_code");
+            String name = rs.getString("product_name");
+            double sale = rs.getDouble("sale_price");
+            double gst = rs.getDouble("gst");
+            double mrp = rs.getDouble("mrp");
+
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            if (model == null) {
+                System.err.println("Table model is null. Make sure jTable1 is initialized properly.");
+                return;
+            }
+
+            boolean found = false;
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String existingCode = model.getValueAt(i, 1).toString();
+                if (existingCode.equals(code)) {
+                    int existingQty = Integer.parseInt(model.getValueAt(i, 3).toString());
+                    existingQty++;
+                    model.setValueAt(existingQty, i, 3); // Qty
+                    model.setValueAt(existingQty * sale, i, 7); // Total = qty * sale
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                int qty = 1;
+                double total = sale;
+                model.addRow(new Object[]{productId,code, name, qty, sale, gst, mrp, total});
             }
         } else {
             System.out.println("No product found for item code: " + itemCode);
@@ -154,13 +225,31 @@ public class NewJFrame extends javax.swing.JFrame {
         }
     });
 }
+    private void addBarcodeListener() {
+    jTextFieldSearch.addActionListener(e -> {
+        String text = jTextFieldSearch.getText().trim();
+        if (text.matches("\\d{8,}")) {
+            autoAddByBarcode(text);
+        }
+    });
+}
+
 
     /**
      * Creates new form NewJFrame
      */
     public NewJFrame() {
         initComponents();
+        
+        // Hide Product ID column
+        jTable1.getColumnModel().getColumn(0).setMinWidth(0);
+        jTable1.getColumnModel().getColumn(0).setMaxWidth(0);
+        jTable1.getColumnModel().getColumn(0).setPreferredWidth(0);
+        jTable1.getTableHeader().setReorderingAllowed(false);
+        jTable1.getTableHeader().setResizingAllowed(false);
         setupSearchBar();
+        BillingCalculator.jTable1 = jTable1;
+        addBarcodeListener();
     }
 
     /**
@@ -179,8 +268,8 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
+        jTextFieldCustomerPhone = new javax.swing.JTextField();
+        jTextFieldCustomerName = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -194,7 +283,7 @@ public class NewJFrame extends javax.swing.JFrame {
         jTextField3 = new javax.swing.JTextField();
         jTextField4 = new javax.swing.JTextField();
         jTextField5 = new javax.swing.JTextField();
-        jTextField6 = new javax.swing.JTextField();
+        invoiceTextField = new javax.swing.JTextField();
         jPanel4 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -223,8 +312,14 @@ public class NewJFrame extends javax.swing.JFrame {
         jTextField17 = new javax.swing.JTextField();
         jTextField18 = new javax.swing.JTextField();
         jLabel22 = new javax.swing.JLabel();
-        jComboBox2 = new javax.swing.JComboBox<>();
+        cmbPaymentMode = new javax.swing.JComboBox<>();
         jLabel23 = new javax.swing.JLabel();
+        jLabel24 = new javax.swing.JLabel();
+        jTextField19 = new javax.swing.JTextField();
+        jTextField20 = new javax.swing.JTextField();
+        txtAmountPaid = new javax.swing.JTextField();
+        jLabel25 = new javax.swing.JLabel();
+        jLabel26 = new javax.swing.JLabel();
         jPanel7 = new javax.swing.JPanel();
         jButton7 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
@@ -277,8 +372,8 @@ public class NewJFrame extends javax.swing.JFrame {
 
         jLabel4.setText("CUSTOMER  NAME:");
         jPanel2.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 60, -1, -1));
-        jPanel2.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 60, 140, -1));
-        jPanel2.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 60, 140, -1));
+        jPanel2.add(jTextFieldCustomerPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 60, 140, -1));
+        jPanel2.add(jTextFieldCustomerName, new org.netbeans.lib.awtextra.AbsoluteConstraints(180, 60, 140, -1));
 
         jButton1.setText("ADD CUSTOMER");
         jPanel2.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(650, 60, -1, -1));
@@ -288,12 +383,27 @@ public class NewJFrame extends javax.swing.JFrame {
 
             },
             new String [] {
-                " ITEM CODE", "PRODUCT NAME", "QTY", "SALE PRICE", "MRP", "TOTAL"
+                "PRODUCT ID", " ITEM CODE", "PRODUCT NAME", "QTY", "SALE PRICE", "GST", "MRP", "TOTAL"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, true, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jTable1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         jScrollPane2.setViewportView(jTable1);
 
         jPanel2.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 100, 900, 320));
+
+        jTextFieldSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextFieldSearchActionPerformed(evt);
+            }
+        });
         jPanel2.add(jTextFieldSearch, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 10, 730, 30));
 
         jLabel21.setFont(new java.awt.Font("Segoe UI Black", 1, 18)); // NOI18N
@@ -331,12 +441,13 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel3.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 180, 130, -1));
         jPanel3.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 130, 130, -1));
 
-        jTextField6.addActionListener(new java.awt.event.ActionListener() {
+        invoiceTextField.setEditable(false);
+        invoiceTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField6ActionPerformed(evt);
+                invoiceTextFieldActionPerformed(evt);
             }
         });
-        jPanel3.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 80, 130, -1));
+        jPanel3.add(invoiceTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 40, 130, -1));
 
         jPanel4.setBackground(new java.awt.Color(192, 245, 255));
         jPanel4.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -441,15 +552,48 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel3.add(jPanel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 70, 320, 390));
 
         jLabel22.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel22.setText("Final-Total:");
-        jPanel3.add(jLabel22, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 230, -1, 20));
+        jLabel22.setText("Amount Paid:");
+        jPanel3.add(jLabel22, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 330, -1, 20));
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CASH", "UPI", "CARD", "NET BANKING" }));
-        jPanel3.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 280, 130, -1));
+        cmbPaymentMode.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "CASH", "UPI", "CARD", "NET BANKING" }));
+        jPanel3.add(cmbPaymentMode, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 280, 130, -1));
 
         jLabel23.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel23.setText("Sub-Total:");
-        jPanel3.add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, 20));
+        jLabel23.setText("Invoice No.:");
+        jPanel3.add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 40, -1, 20));
+
+        jLabel24.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel24.setText("Sub-Total:");
+        jPanel3.add(jLabel24, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, 20));
+
+        jTextField19.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField19ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jTextField19, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 380, 130, -1));
+
+        jTextField20.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jTextField20ActionPerformed(evt);
+            }
+        });
+        jPanel3.add(jTextField20, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 80, 130, -1));
+
+        txtAmountPaid.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtAmountPaidActionPerformed(evt);
+            }
+        });
+        jPanel3.add(txtAmountPaid, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 330, 130, -1));
+
+        jLabel25.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel25.setText("Amount Due:");
+        jPanel3.add(jLabel25, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 380, -1, 20));
+
+        jLabel26.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel26.setText("Final-Total:");
+        jPanel3.add(jLabel26, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 230, -1, 20));
 
         getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(1190, 70, 320, 440));
 
@@ -571,9 +715,9 @@ public class NewJFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-    private void jTextField6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField6ActionPerformed
+    private void invoiceTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceTextFieldActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField6ActionPerformed
+    }//GEN-LAST:event_invoiceTextFieldActionPerformed
 
     private void jTextField4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField4ActionPerformed
         // TODO add your handling code here:
@@ -587,10 +731,35 @@ public class NewJFrame extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
+          try {
+        
+        // Payment details
+        String paymentMode = cmbPaymentMode.getSelectedItem().toString(); // Combo box
+        double amountPaid  = 0.0;
+        if (!txtAmountPaid.getText().trim().isEmpty()) {
+            amountPaid = Double.parseDouble(txtAmountPaid.getText().trim());
+        }
+
+        // Call saveBill with values (not textfields)
+        saveBill.saveBill(
+            jTable1,         
+            jTextFieldCustomerName,      
+            jTextFieldCustomerPhone,     
+            paymentMode,       
+            amountPaid         
+        );
+
+        // Generate bill text and show preview only if save was successful
         String billText = BillGenerator.generateBill(jTable1);
         Bill_Dialogbox preview = new Bill_Dialogbox();
-        preview.setBillText(billText); // set text inside dialog
+        preview.setBillText(billText);
         preview.setVisible(true);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error saving bill: " + e.getMessage());
+    }
+        
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
@@ -641,6 +810,22 @@ public class NewJFrame extends javax.swing.JFrame {
         exp.setVisible(true);
     }//GEN-LAST:event_jButton10ActionPerformed
 
+    private void jTextField19ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField19ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextField19ActionPerformed
+
+    private void jTextField20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField20ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextField20ActionPerformed
+
+    private void txtAmountPaidActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtAmountPaidActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtAmountPaidActionPerformed
+
+    private void jTextFieldSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearchActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jTextFieldSearchActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -677,6 +862,8 @@ public class NewJFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbPaymentMode;
+    private javax.swing.JTextField invoiceTextField;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton11;
@@ -693,7 +880,6 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
     private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -710,6 +896,9 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -729,7 +918,6 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField10;
     private javax.swing.JTextField jTextField11;
     private javax.swing.JTextField jTextField12;
@@ -739,14 +927,17 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField16;
     private javax.swing.JTextField jTextField17;
     private javax.swing.JTextField jTextField18;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField jTextField19;
+    private javax.swing.JTextField jTextField20;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
     private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField jTextField8;
     private javax.swing.JTextField jTextField9;
+    private javax.swing.JTextField jTextFieldCustomerName;
+    private javax.swing.JTextField jTextFieldCustomerPhone;
     private javax.swing.JTextField jTextFieldSearch;
+    private javax.swing.JTextField txtAmountPaid;
     // End of variables declaration//GEN-END:variables
 }
