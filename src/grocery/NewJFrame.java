@@ -32,6 +32,7 @@ public class NewJFrame extends javax.swing.JFrame {
     DefaultListModel<String> listModel = new DefaultListModel<>();
     JList<String> suggestionList = new JList<>(listModel);
     JScrollPane scrollPane = new JScrollPane(suggestionList);
+    private int lastAddedRow = -1;
     
     private void showSuggestions() {
     String text = jTextFieldSearch.getText().trim();
@@ -39,13 +40,6 @@ public class NewJFrame extends javax.swing.JFrame {
 
     if (text.isEmpty()) {
         scrollPane.setVisible(false);
-        return;
-    }
-    
-    // 🔥 BARCODE SCANNER HANDLING
-    // Most barcodes are numeric and length >= 8
-    if (text.matches("\\d{8,}")) {
-        autoAddByBarcode(text);
         return;
     }
 
@@ -99,24 +93,46 @@ public class NewJFrame extends javax.swing.JFrame {
 
             boolean found = false;
 
+            // 🔹 EXISTING PRODUCT CASE
             for (int i = 0; i < model.getRowCount(); i++) {
                 String existingCode = model.getValueAt(i, 1).toString();
+
                 if (existingCode.equals(code)) {
-                    int existingQty = Integer.parseInt(model.getValueAt(i, 3).toString());
+                    int existingQty = Integer.parseInt(
+                        model.getValueAt(i, 3).toString()
+                    );
                     existingQty++;
-                    model.setValueAt(existingQty, i, 3);           // Qty
-                    model.setValueAt(existingQty * sale, i, 7);    // Total
+
+                    model.setValueAt(existingQty, i, 3);        // Qty
+                    model.setValueAt(existingQty * sale, i, 7); // Total
+
+                    // ✅ NEW: auto-select existing row
+                    lastAddedRow = i;
+                    jTable1.setRowSelectionInterval(i, i);
+                    jTable1.scrollRectToVisible(
+                        jTable1.getCellRect(i, 0, true)
+                    );
+
                     found = true;
                     break;
                 }
             }
 
+            // 🔹 NEW PRODUCT CASE
             if (!found) {
                 int qty = 1;
                 double total = sale;
+
                 model.addRow(new Object[]{
                     productId, code, name, qty, sale, gst, mrp, total
                 });
+
+                // ✅ NEW: auto-select newly added row
+                lastAddedRow = model.getRowCount() - 1;
+                jTable1.setRowSelectionInterval(lastAddedRow, lastAddedRow);
+                jTable1.scrollRectToVisible(
+                    jTable1.getCellRect(lastAddedRow, 0, true)
+                );
             }
 
         } else {
@@ -131,6 +147,53 @@ public class NewJFrame extends javax.swing.JFrame {
         e.printStackTrace();
     }
 }
+    private void setupTableEnterKey() {
+    jTable1.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                e.consume();
+
+                int row = jTable1.getSelectedRow();
+                if (row == -1) return;
+
+                String productName = jTable1.getValueAt(row, 2).toString();
+                double price = Double.parseDouble(
+                    jTable1.getValueAt(row, 4).toString()
+                );
+
+                String input = JOptionPane.showInputDialog(
+                    NewJFrame.this,
+                    "Enter final quantity for:\n" + productName,
+                    "Update Quantity",
+                    JOptionPane.QUESTION_MESSAGE
+                );
+
+                if (input == null) return;
+
+                try {
+                    int qty = Integer.parseInt(input.trim());
+                    if (qty <= 0) return;
+
+                    jTable1.setValueAt(qty, row, 3);
+                    jTable1.setValueAt(qty * price, row, 7);
+                    jTextFieldSearch.setText("");
+                    jTextFieldSearch.requestFocusInWindow();
+
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(
+                        NewJFrame.this,
+                        "Invalid quantity",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        }
+    });
+}
+
+    
     private void fillProductTable(String selectedValue) {
     if (selectedValue == null || selectedValue.isEmpty()) return;
 
@@ -165,6 +228,12 @@ public class NewJFrame extends javax.swing.JFrame {
                     existingQty++;
                     model.setValueAt(existingQty, i, 3); // Qty
                     model.setValueAt(existingQty * sale, i, 7); // Total = qty * sale
+                    lastAddedRow = i;
+                    jTable1.setRowSelectionInterval(i, i);
+                    jTable1.scrollRectToVisible(
+                    jTable1.getCellRect(i, 0, true)
+                     );
+
                     found = true;
                     break;
                 }
@@ -174,6 +243,11 @@ public class NewJFrame extends javax.swing.JFrame {
                 int qty = 1;
                 double total = sale;
                 model.addRow(new Object[]{productId,code, name, qty, sale, gst, mrp, total});
+                lastAddedRow = model.getRowCount() - 1;
+                jTable1.setRowSelectionInterval(lastAddedRow, lastAddedRow);
+                jTable1.scrollRectToVisible(
+                jTable1.getCellRect(lastAddedRow, 0, true)
+    );
             }
         } else {
             System.out.println("No product found for item code: " + itemCode);
@@ -220,6 +294,8 @@ public class NewJFrame extends javax.swing.JFrame {
                 if (selected != null) {
                     fillProductTable(selected);
                     scrollPane.setVisible(false);
+                    jTextFieldSearch.setText("");
+                    jTextFieldSearch.requestFocusInWindow();
                 }
             }
         }
@@ -250,6 +326,8 @@ public class NewJFrame extends javax.swing.JFrame {
         setupSearchBar();
         BillingCalculator.jTable1 = jTable1;
         addBarcodeListener();
+        setupTableEnterKey();
+
     }
 
     /**
