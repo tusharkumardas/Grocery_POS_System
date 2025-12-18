@@ -309,6 +309,68 @@ public class NewJFrame extends javax.swing.JFrame {
         }
     });
 }
+    private void loadLastInvoiceNo() {
+    try (Connection con = ConnectionProvider.getCon()) {
+
+        String sql = "SELECT invoice_no FROM sales ORDER BY id DESC LIMIT 1";
+        PreparedStatement pst = con.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            invoiceTextField.setText(rs.getString("invoice_no"));
+        } else {
+            invoiceTextField.setText("N/A");
+        }
+
+    } catch (Exception e) {
+        invoiceTextField.setText("N/A");
+        e.printStackTrace();
+    }
+}
+
+    private void updateBillingSummary() {
+
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+
+    double subTotal = 0;
+    double totalTax = 0;
+
+    for (int i = 0; i < model.getRowCount(); i++) {
+
+        int qty = Integer.parseInt(model.getValueAt(i, 3).toString());
+        double price = Double.parseDouble(model.getValueAt(i, 4).toString());
+        double gst = Double.parseDouble(model.getValueAt(i, 5).toString());
+
+        double rowTotal = qty * price;
+        double rowTax = rowTotal * gst / 100;
+
+        subTotal += rowTotal;
+        totalTax += rowTax;
+    }
+
+    double discount = 0;
+    try {
+        discount = Double.parseDouble(txtDiscount.getText().trim());
+    } catch (Exception ignored) {}
+
+    double finalTotal = subTotal - discount + totalTax;
+
+    txtSubTotal.setText(String.format("%.2f", subTotal));
+    txtTax.setText(String.format("%.2f", totalTax));
+    txtFinalTotal.setText(String.format("%.2f", finalTotal));
+
+    updateAmountDue();
+}
+
+    private void updateAmountDue() {
+    try {
+        double finalTotal = Double.parseDouble(txtFinalTotal.getText());
+        double paid = Double.parseDouble(txtAmountPaid.getText());
+        txtAmountDue.setText(String.format("%.2f", finalTotal - paid));
+        } catch (Exception e) {
+        txtAmountDue.setText("0.00");
+    }
+}
 
 
     /**
@@ -327,6 +389,20 @@ public class NewJFrame extends javax.swing.JFrame {
         BillingCalculator.jTable1 = jTable1;
         addBarcodeListener();
         setupTableEnterKey();
+        loadLastInvoiceNo();
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.addTableModelListener(e -> updateBillingSummary());
+        txtAmountPaid.getDocument().addDocumentListener(new DocumentListener() {
+        public void insertUpdate(DocumentEvent e) { updateAmountDue(); }
+        public void removeUpdate(DocumentEvent e) { updateAmountDue(); }
+        public void changedUpdate(DocumentEvent e) { updateAmountDue(); }
+    });
+        txtDiscount.getDocument().addDocumentListener(new DocumentListener() {
+        public void insertUpdate(DocumentEvent e) { updateBillingSummary(); }
+        public void removeUpdate(DocumentEvent e) { updateBillingSummary(); }
+        public void changedUpdate(DocumentEvent e) { updateBillingSummary(); }
+});
+
 
     }
 
@@ -358,9 +434,9 @@ public class NewJFrame extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
-        jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
+        txtFinalTotal = new javax.swing.JTextField();
+        txtTax = new javax.swing.JTextField();
+        txtDiscount = new javax.swing.JTextField();
         invoiceTextField = new javax.swing.JTextField();
         jPanel4 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
@@ -393,8 +469,8 @@ public class NewJFrame extends javax.swing.JFrame {
         cmbPaymentMode = new javax.swing.JComboBox<>();
         jLabel23 = new javax.swing.JLabel();
         jLabel24 = new javax.swing.JLabel();
-        jTextField19 = new javax.swing.JTextField();
-        jTextField20 = new javax.swing.JTextField();
+        txtAmountDue = new javax.swing.JTextField();
+        txtSubTotal = new javax.swing.JTextField();
         txtAmountPaid = new javax.swing.JTextField();
         jLabel25 = new javax.swing.JLabel();
         jLabel26 = new javax.swing.JLabel();
@@ -509,15 +585,15 @@ public class NewJFrame extends javax.swing.JFrame {
         jLabel8.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel8.setText("SUMMARY");
         jPanel3.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 10, -1, 20));
-        jPanel3.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 230, 130, -1));
+        jPanel3.add(txtFinalTotal, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 230, 130, -1));
 
-        jTextField4.addActionListener(new java.awt.event.ActionListener() {
+        txtTax.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField4ActionPerformed(evt);
+                txtTaxActionPerformed(evt);
             }
         });
-        jPanel3.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 180, 130, -1));
-        jPanel3.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 130, 130, -1));
+        jPanel3.add(txtTax, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 180, 130, -1));
+        jPanel3.add(txtDiscount, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 130, 130, -1));
 
         invoiceTextField.setEditable(false);
         invoiceTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -644,19 +720,19 @@ public class NewJFrame extends javax.swing.JFrame {
         jLabel24.setText("Sub-Total:");
         jPanel3.add(jLabel24, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 80, -1, 20));
 
-        jTextField19.addActionListener(new java.awt.event.ActionListener() {
+        txtAmountDue.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField19ActionPerformed(evt);
+                txtAmountDueActionPerformed(evt);
             }
         });
-        jPanel3.add(jTextField19, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 380, 130, -1));
+        jPanel3.add(txtAmountDue, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 380, 130, -1));
 
-        jTextField20.addActionListener(new java.awt.event.ActionListener() {
+        txtSubTotal.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField20ActionPerformed(evt);
+                txtSubTotalActionPerformed(evt);
             }
         });
-        jPanel3.add(jTextField20, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 80, 130, -1));
+        jPanel3.add(txtSubTotal, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 80, 130, -1));
 
         txtAmountPaid.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -797,9 +873,9 @@ public class NewJFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_invoiceTextFieldActionPerformed
 
-    private void jTextField4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField4ActionPerformed
+    private void txtTaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTaxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField4ActionPerformed
+    }//GEN-LAST:event_txtTaxActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
@@ -826,7 +902,7 @@ public class NewJFrame extends javax.swing.JFrame {
             paymentMode,       
             amountPaid         
         );
-
+        loadLastInvoiceNo();
         // Generate bill text and show preview only if save was successful
         String billText = BillGenerator.generateBill(jTable1);
         Bill_Dialogbox preview = new Bill_Dialogbox();
@@ -888,13 +964,13 @@ public class NewJFrame extends javax.swing.JFrame {
         exp.setVisible(true);
     }//GEN-LAST:event_jButton10ActionPerformed
 
-    private void jTextField19ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField19ActionPerformed
+    private void txtAmountDueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtAmountDueActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField19ActionPerformed
+    }//GEN-LAST:event_txtAmountDueActionPerformed
 
-    private void jTextField20ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField20ActionPerformed
+    private void txtSubTotalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtSubTotalActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField20ActionPerformed
+    }//GEN-LAST:event_txtSubTotalActionPerformed
 
     private void txtAmountPaidActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtAmountPaidActionPerformed
         // TODO add your handling code here:
@@ -1005,17 +1081,17 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField16;
     private javax.swing.JTextField jTextField17;
     private javax.swing.JTextField jTextField18;
-    private javax.swing.JTextField jTextField19;
-    private javax.swing.JTextField jTextField20;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
-    private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField jTextField8;
     private javax.swing.JTextField jTextField9;
     private javax.swing.JTextField jTextFieldCustomerName;
     private javax.swing.JTextField jTextFieldCustomerPhone;
     private javax.swing.JTextField jTextFieldSearch;
+    private javax.swing.JTextField txtAmountDue;
     private javax.swing.JTextField txtAmountPaid;
+    private javax.swing.JTextField txtDiscount;
+    private javax.swing.JTextField txtFinalTotal;
+    private javax.swing.JTextField txtSubTotal;
+    private javax.swing.JTextField txtTax;
     // End of variables declaration//GEN-END:variables
 }
