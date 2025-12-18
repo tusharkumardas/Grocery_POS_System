@@ -22,6 +22,10 @@ import java.sql.ResultSet;
 import Project.BillGenerator;
 import Project.BillingCalculator;
 import Project.saveBill;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import javax.swing.Timer;
+
 
 
 /**
@@ -372,13 +376,78 @@ public class NewJFrame extends javax.swing.JFrame {
     }
 }
 
+    private void startDateTime() {
+    DateTimeFormatter formatter =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a");
 
+    Timer timer = new Timer(1000, e -> {
+        jLabel2.setText(LocalDateTime.now().format(formatter));
+    });
+    timer.start();
+}
+
+
+    private void resetBillingScreen() {
+
+    // Clear table
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.setRowCount(0);
+
+    // Reset summary
+    txtSubTotal.setText("0.00");
+    txtTax.setText("0.00");
+    txtFinalTotal.setText("0.00");
+    txtAmountDue.setText("0.00");
+
+    // Clear inputs
+    txtDiscount.setText("");
+    txtAmountPaid.setText("");
+    jTextFieldCustomerName.setText("");
+    jTextFieldCustomerPhone.setText("");
+
+    // Hide suggestions if any
+    scrollPane.setVisible(false);
+
+    // Cursor back to search bar
+    jTextFieldSearch.requestFocusInWindow();
+}
+    private void deleteSelectedItem() {
+    int selectedRow = jTable1.getSelectedRow();
+
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Please select an item to delete",
+            "No Selection",
+            JOptionPane.WARNING_MESSAGE
+        );
+        return;
+    }
+
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.removeRow(selectedRow);
+
+    // Optional: auto-select next row
+    if (model.getRowCount() > 0) {
+        int newRow = Math.min(selectedRow, model.getRowCount() - 1);
+        jTable1.setRowSelectionInterval(newRow, newRow);
+    }
+
+    // 🔁 Recalculate totals
+   // BillingCalculator.calculateTotals();
+    
+    // 🔙 Focus back to search bar
+    jTextFieldSearch.requestFocusInWindow();
+}
+
+    
+    
     /**
      * Creates new form NewJFrame
      */
     public NewJFrame() {
         initComponents();
-        
+        startDateTime();
         // Hide Product ID column
         jTable1.getColumnModel().getColumn(0).setMinWidth(0);
         jTable1.getColumnModel().getColumn(0).setMaxWidth(0);
@@ -835,6 +904,11 @@ public class NewJFrame extends javax.swing.JFrame {
 
         jButton3.setBackground(new java.awt.Color(255, 102, 102));
         jButton3.setText("DELETE ITEM");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
         getContentPane().add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 550, 130, -1));
 
         jButton4.setBackground(new java.awt.Color(255, 255, 153));
@@ -908,6 +982,9 @@ public class NewJFrame extends javax.swing.JFrame {
         Bill_Dialogbox preview = new Bill_Dialogbox();
         preview.setBillText(billText);
         preview.setVisible(true);
+        // After preview.setVisible(true);
+        resetBillingScreen();
+
 
     } catch (Exception e) {
         e.printStackTrace();
@@ -979,6 +1056,11 @@ public class NewJFrame extends javax.swing.JFrame {
     private void jTextFieldSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldSearchActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jTextFieldSearchActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        deleteSelectedItem();
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
