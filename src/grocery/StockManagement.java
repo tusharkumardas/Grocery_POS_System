@@ -7,14 +7,67 @@ import Project.PDFStockReportGenerator;
 import java.sql.*;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-
-
+import javax.swing.JList;
+import javax.swing.DefaultListModel;
+import javax.swing.JScrollPane;
+import javax.swing.JPopupMenu;
 
 /**
  *
  * @author Tushar Kumar Das
  */
 public class StockManagement extends javax.swing.JFrame {
+    private JPopupMenu suggestionPopup;
+    private JList<String> suggestionList;
+    
+    private void initSearchSuggestions() {
+    suggestionPopup = new JPopupMenu();
+    suggestionList = new JList<>();
+    suggestionList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+    JScrollPane scrollPane = new JScrollPane(suggestionList);
+    scrollPane.setPreferredSize(new java.awt.Dimension(jTextField19.getWidth(), 120));
+    suggestionPopup.add(scrollPane);
+
+    // Mouse selection
+    suggestionList.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (e.getClickCount() == 1) {
+                selectSuggestion();
+            }
+        }
+    });
+    
+    //keyboard arrow key working in sugestion box
+    jTextField19.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyPressed(java.awt.event.KeyEvent e) {
+
+        if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN) {
+            if (suggestionPopup.isVisible()) {
+                suggestionList.requestFocus();
+                suggestionList.setSelectedIndex(0);
+            }
+        }
+    }
+   });
+    // Keyboard selection
+    suggestionList.addKeyListener(new java.awt.event.KeyAdapter() {
+        public void keyPressed(java.awt.event.KeyEvent e) {
+            if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                selectSuggestion();
+            }
+        }
+    });
+
+    // Detect typing
+    jTextField19.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        public void insertUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
+        public void removeUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
+        public void changedUpdate(javax.swing.event.DocumentEvent e) { showSuggestions(); }
+    });
+}
+
     public void loadStockData() {
        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
        model.setRowCount(0); // clear existing rows
@@ -79,6 +132,117 @@ public class StockManagement extends javax.swing.JFrame {
     }
 }
 
+    private void showSuggestions() {
+    String text = jTextField19.getText().trim();
+
+    if (text.isEmpty()) {
+        suggestionPopup.setVisible(false);
+        loadStockData();
+        return;
+    }
+
+    DefaultListModel<String> model = new DefaultListModel<>();
+
+    try {
+        Connection con = Project.ConnectionProvider.getCon();
+        String sql = """
+            SELECT item_code, product_name 
+            FROM products
+            WHERE product_name LIKE ?
+               OR item_code LIKE ?
+               OR barcode LIKE ?
+            LIMIT 10
+        """;
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        String query = "%" + text + "%";
+        ps.setString(1, query);
+        ps.setString(2, query);
+        ps.setString(3, query);
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            String display =
+                rs.getString("item_code") + " | " + rs.getString("product_name");
+            model.addElement(display);
+        }
+
+        rs.close();
+        ps.close();
+        con.close();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    if (model.isEmpty()) {
+        suggestionPopup.setVisible(false);
+    } else {
+        suggestionList.setModel(model);
+        suggestionPopup.show(jTextField19, 0, jTextField19.getHeight());
+        jTextField19.requestFocus();
+    }
+
+    // 🔥 LIVE table update while typing
+    loadFilteredStock(text);
+}
+
+    private void selectSuggestion() {
+    String selectedValue = suggestionList.getSelectedValue();
+    if (selectedValue == null) return;
+
+    jTextField19.setText(selectedValue);
+    suggestionPopup.setVisible(false);
+    loadFilteredStock(selectedValue);
+}
+
+    private void loadFilteredStock(String keyword) {
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.setRowCount(0);
+
+    try {
+        Connection con = Project.ConnectionProvider.getCon();
+        String sql = """
+            SELECT * FROM products 
+            WHERE product_name LIKE ? 
+               OR item_code LIKE ? 
+               OR barcode LIKE ?
+        """;
+
+        PreparedStatement ps = con.prepareStatement(sql);
+        String query = "%" + keyword + "%";
+        ps.setString(1, query);
+        ps.setString(2, query);
+        ps.setString(3, query);
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getString("item_code"),
+                rs.getString("product_name"),
+                rs.getInt("qty"),
+                rs.getDouble("purchase_price"),
+                rs.getDouble("sale_price"),
+                rs.getDouble("mrp"),
+                rs.getDate("exp_date"),
+                rs.getString("brand_name"),
+                rs.getString("barcode"),
+                rs.getInt("stock_alert")
+            });
+        }
+
+        rs.close();
+        ps.close();
+        con.close();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+    
     /**
      * Creates new form StockManagement
      */
@@ -86,6 +250,7 @@ public class StockManagement extends javax.swing.JFrame {
         initComponents();
         loadStockData();
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        initSearchSuggestions();
     }
     
     /**
