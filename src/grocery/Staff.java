@@ -175,7 +175,22 @@ private void updateStaff() {
         e.printStackTrace();
     }
 }
+     private void fillFormFromSelectedRow() {
+    int row = jTable2.getSelectedRow();
+    if (row == -1) return;
 
+    jTextField1.setText(jTable2.getValueAt(row, 1).toString()); // Name
+    jTextField2.setText(jTable2.getValueAt(row, 2).toString()); // DOB
+    jTextField3.setText(jTable2.getValueAt(row, 3).toString()); // Phone
+    jTextField4.setText(jTable2.getValueAt(row, 4).toString()); // Email
+    jComboBox1.setSelectedItem(jTable2.getValueAt(row, 5).toString()); // Role
+    jTextField5.setText(jTable2.getValueAt(row, 6).toString()); // Salary
+    jTextField9.setText(jTable2.getValueAt(row, 7).toString()); // Join Date
+    jTextField6.setText(
+        jTable2.getValueAt(row, 8) != null ? jTable2.getValueAt(row, 8).toString() : ""
+    ); // Govt ID path
+}
+     
 
 
     /**
@@ -184,6 +199,17 @@ private void updateStaff() {
     public Staff() {
         initComponents();
         loadStaffTable();
+        jTable2.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyPressed(java.awt.event.KeyEvent evt) {
+        if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            evt.consume(); // prevent JTable default behavior
+            fillFormFromSelectedRow();
+        }
+    }
+});
+
+
         jTable2.addMouseListener(new java.awt.event.MouseAdapter() {
     @Override
     public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -229,10 +255,12 @@ private void updateStaff() {
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
         jButton5 = new javax.swing.JButton();
         jTextField9 = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable2 = new javax.swing.JTable();
+        jLabel10 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -311,6 +339,18 @@ private void updateStaff() {
         });
         jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 420, 80, -1));
 
+        jButton5.setText("ADD");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 420, -1, -1));
+        jPanel1.add(jTextField9, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 350, 130, -1));
+
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         jTable2.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -329,18 +369,14 @@ private void updateStaff() {
         });
         jScrollPane2.setViewportView(jTable2);
 
-        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 50, 640, 350));
+        jScrollPane1.setViewportView(jScrollPane2);
 
-        jButton5.setText("ADD");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
-        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 420, -1, -1));
-        jPanel1.add(jTextField9, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 350, 130, -1));
+        jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 40, 650, 370));
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 460));
+        jLabel10.setText("NOTE- Select record and press \"ENTER\" to update");
+        jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 450, -1, -1));
+
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 900, 470));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -353,79 +389,79 @@ private void updateStaff() {
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
         try {
-        // Open file chooser
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select Government ID PDF");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Documents", "pdf"));
+            // Open file chooser
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Select Government ID PDF");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Documents", "pdf"));
 
-        int result = fileChooser.showOpenDialog(this);
+            int result = fileChooser.showOpenDialog(this);
 
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
 
-            // Fixed destination folder
-            String destDir = "C:/GroceryApp/StaffDocs/";
-            File dir = new File(destDir);
-            if (!dir.exists()) {
-                dir.mkdirs(); // create folder if not exists
+                // Fixed destination folder
+                String destDir = "C:/GroceryApp/StaffDocs/";
+                File dir = new File(destDir);
+                if (!dir.exists()) {
+                    dir.mkdirs(); // create folder if not exists
+                }
+
+                // Destination file with timestamp to avoid overwrite
+                String newFileName = System.currentTimeMillis() + "_" + selectedFile.getName();
+                File destFile = new File(destDir + newFileName);
+
+                // Copy file
+                Files.copy(selectedFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                // Save the path in textfield (hidden or readonly)
+                jTextField6.setText(destFile.getAbsolutePath());
+
+                JOptionPane.showMessageDialog(this, "File uploaded successfully!");
             }
 
-            // Destination file with timestamp to avoid overwrite
-            String newFileName = System.currentTimeMillis() + "_" + selectedFile.getName();
-            File destFile = new File(destDir + newFileName);
-
-            // Copy file
-            Files.copy(selectedFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            // Save the path in textfield (hidden or readonly)
-            jTextField6.setText(destFile.getAbsolutePath());
-
-            JOptionPane.showMessageDialog(this, "File uploaded successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error uploading file: " + e.getMessage());
         }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error uploading file: " + e.getMessage());
-    }
     }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        try {
+            int row = jTable2.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Please select a staff member to delete!");
+                return;
+            }
+
+            String staffId = (String) jTable2.getValueAt(row, 0);
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this staff?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                Connection con = ConnectionProvider.getCon();
+                String sql = "DELETE FROM staff WHERE staff_code=?";
+                PreparedStatement pst = con.prepareStatement(sql);
+                pst.setString(1, staffId);
+                pst.executeUpdate();
+
+                JOptionPane.showMessageDialog(this, "Staff deleted successfully!");
+                loadStaffTable();
+                clearFields();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error deleting staff: " + e.getMessage());
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
         clearFields();
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // TODO add your handling code here:
-        try {
-        int row = jTable2.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a staff member to delete!");
-            return;
-        }
-
-        String staffId = (String) jTable2.getValueAt(row, 0);
-
-        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this staff?", "Confirm", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
-            Connection con = ConnectionProvider.getCon();
-            String sql = "DELETE FROM staff WHERE staff_code=?";
-            PreparedStatement pst = con.prepareStatement(sql);
-            pst.setString(1, staffId);
-            pst.executeUpdate();
-
-            JOptionPane.showMessageDialog(this, "Staff deleted successfully!");
-            loadStaffTable();
-            clearFields();
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error deleting staff: " + e.getMessage());
-    }
-    }//GEN-LAST:event_jButton3ActionPerformed
-
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-         updateStaff();
+        updateStaff();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void openGovtIdPdf(int row) {
@@ -496,6 +532,7 @@ private void updateStaff() {
     private javax.swing.JButton jButton5;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -505,6 +542,7 @@ private void updateStaff() {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable2;
     private javax.swing.JTextField jTextField1;
