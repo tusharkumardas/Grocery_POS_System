@@ -81,6 +81,12 @@ public class Sale extends javax.swing.JFrame {
         }
     }
 }
+    private void clearSearchInputs() {
+    txtInvoiceNo.setText("");
+
+    if (dcFromDate != null) dcFromDate.setDate(null);
+    if (dcToDate != null) dcToDate.setDate(null);
+}
 
     /**
      * Creates new form Sale
@@ -103,9 +109,7 @@ public class Sale extends javax.swing.JFrame {
         buttonGroup1 = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        txtFromDate = new javax.swing.JTextField();
         txtInvoiceNo = new javax.swing.JTextField();
-        txtToDate = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -119,6 +123,8 @@ public class Sale extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         rdbInvoice = new javax.swing.JRadioButton();
         jButton6 = new javax.swing.JButton();
+        dcFromDate = new com.toedter.calendar.JDateChooser();
+        dcToDate = new com.toedter.calendar.JDateChooser();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -129,12 +135,10 @@ public class Sale extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel3.setText("Search By:");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 80, -1));
-        jPanel1.add(txtFromDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(460, 40, 100, -1));
         jPanel1.add(txtInvoiceNo, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 40, 150, -1));
-        jPanel1.add(txtToDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 40, 100, -1));
 
         jLabel5.setText("TO");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 40, -1, -1));
+        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 40, -1, -1));
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -184,7 +188,7 @@ public class Sale extends javax.swing.JFrame {
                 jButton3ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 40, -1, -1));
+        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 40, -1, -1));
 
         jButton4.setText("View Details");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
@@ -201,15 +205,15 @@ public class Sale extends javax.swing.JFrame {
                 jButton5ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 40, -1, -1));
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 40, -1, -1));
 
         buttonGroup1.add(rdbDateRange);
         rdbDateRange.setText("Date Range:");
-        jPanel1.add(rdbDateRange, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 40, -1, -1));
+        jPanel1.add(rdbDateRange, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 40, -1, -1));
 
         jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel6.setText("OR");
-        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 40, -1, -1));
+        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 40, -1, -1));
 
         buttonGroup1.add(rdbInvoice);
         rdbInvoice.setSelected(true);
@@ -223,6 +227,12 @@ public class Sale extends javax.swing.JFrame {
             }
         });
         jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 380, -1, -1));
+
+        dcFromDate.setDateFormatString("yyyy-MM-dd");
+        jPanel1.add(dcFromDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 40, 140, -1));
+
+        dcToDate.setDateFormatString("yyyy-MM-dd");
+        jPanel1.add(dcToDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 40, 150, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 960, 450));
 
@@ -339,8 +349,19 @@ public class Sale extends javax.swing.JFrame {
                   "amount_paid, amount_due, payment_mode, pdf_path, created_at " +
                   "FROM sales WHERE DATE(created_at) BETWEEN ? AND ?";
             ps = con.prepareStatement(sql);
-            ps.setString(1, txtFromDate.getText().trim()); // Format: YYYY-MM-DD
-            ps.setString(2, txtToDate.getText().trim());   // Format: YYYY-MM-DD
+            java.util.Date fromDate = dcFromDate.getDate();
+            java.util.Date toDate   = dcToDate.getDate();
+
+            if (fromDate == null || toDate == null) {
+                  JOptionPane.showMessageDialog(this, "Please select both From and To dates");
+            return;
+           }
+
+          java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+
+           ps.setString(1, sdf.format(fromDate));
+           ps.setString(2, sdf.format(toDate));
+
         }
 
         rs = ps.executeQuery();
@@ -393,11 +414,13 @@ public class Sale extends javax.swing.JFrame {
             ex.printStackTrace();
         }
     }
+    clearSearchInputs();
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
         loadSalesTable();
+        clearSearchInputs();
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
@@ -447,6 +470,8 @@ public class Sale extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
+    private com.toedter.calendar.JDateChooser dcFromDate;
+    private com.toedter.calendar.JDateChooser dcToDate;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
@@ -462,8 +487,6 @@ public class Sale extends javax.swing.JFrame {
     private javax.swing.JRadioButton rdbDateRange;
     private javax.swing.JRadioButton rdbInvoice;
     private javax.swing.JTable salesTable;
-    private javax.swing.JTextField txtFromDate;
     private javax.swing.JTextField txtInvoiceNo;
-    private javax.swing.JTextField txtToDate;
     // End of variables declaration//GEN-END:variables
 }
