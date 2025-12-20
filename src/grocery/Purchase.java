@@ -91,18 +91,14 @@ public class Purchase extends javax.swing.JFrame {
     String purchaseNo = PurchaseIDGenerator.generatePurchaseID();
 
     // ---- Date from JTextField ----
-    String dateStr = txtPurchaseDate.getText().trim();
-    if (dateStr.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Please enter date (YYYY-MM-DD).");
-        return;
-    }
-    java.sql.Date purchaseDate;
-    try {
-        purchaseDate = java.sql.Date.valueOf(dateStr); // Works only for YYYY-MM-DD
-    } catch (IllegalArgumentException ex) {
-        JOptionPane.showMessageDialog(this, "Invalid date format! Use YYYY-MM-DD.");
-        return;
-    }
+    if (jdcPurchaseDate.getDate() == null) {
+    JOptionPane.showMessageDialog(this, "Please select a purchase date.");
+    return;
+}
+
+// Convert util.Date → sql.Date
+java.sql.Date purchaseDate =
+        new java.sql.Date(jdcPurchaseDate.getDate().getTime());
 
     // ---- Other fields ----
     String supplierName  = txtSupplierName.getText().trim();
@@ -147,7 +143,7 @@ public class Purchase extends javax.swing.JFrame {
             loadPurchaseTable();
 
             // ---- Clear fields ----
-            txtPurchaseDate.setText("");
+            jdcPurchaseDate.setDate(null);
             txtSupplierName.setText("");
             txtSupplierPhone.setText("");
             txtTotalAmount.setText("");
@@ -163,7 +159,7 @@ public class Purchase extends javax.swing.JFrame {
     }
 }
 private void clearPurchaseFields() {
-    txtPurchaseDate.setText("");  // reset JDateChooser
+    jdcPurchaseDate.setDate(null);  // reset JDateChooser
     txtSupplierName.setText("");
     txtSupplierPhone.setText("");
     txtTotalAmount.setText("");
@@ -259,7 +255,6 @@ private void deletePurchase() {
         jLabel8 = new javax.swing.JLabel();
         txtTotalGST = new javax.swing.JTextField();
         txtNetAmount = new javax.swing.JTextField();
-        txtPurchaseDate = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtAmountPaid = new javax.swing.JTextField();
         txtAmountDue = new javax.swing.JTextField();
@@ -268,6 +263,8 @@ private void deletePurchase() {
         jLabel11 = new javax.swing.JLabel();
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
+        jdcPurchaseDate = new com.toedter.calendar.JDateChooser();
+        jLabel12 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -278,18 +275,18 @@ private void deletePurchase() {
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel1.setText("Supplier Phone:");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 20, 100, -1));
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 30, 100, -1));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel2.setText("Date:");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 20, 60, 20));
-        jPanel1.add(txtSupplierPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 10, 120, 30));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 30, 60, 20));
+        jPanel1.add(txtSupplierPhone, new org.netbeans.lib.awtextra.AbsoluteConstraints(780, 30, 190, 30));
         jPanel1.add(txtTotalAmount, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 310, 110, 30));
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jLabel3.setText("Supplier Name:");
-        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 20, 100, -1));
-        jPanel1.add(txtSupplierName, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 10, 150, 30));
+        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 30, 100, -1));
+        jPanel1.add(txtSupplierName, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 30, 180, 30));
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -364,7 +361,6 @@ private void deletePurchase() {
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 380, -1, -1));
         jPanel1.add(txtTotalGST, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 310, 110, 30));
         jPanel1.add(txtNetAmount, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 310, 110, 30));
-        jPanel1.add(txtPurchaseDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 10, 110, 30));
 
         jLabel9.setText("Amount Paid:");
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(650, 320, -1, -1));
@@ -395,6 +391,13 @@ private void deletePurchase() {
             }
         });
         jPanel1.add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 440, -1, -1));
+
+        jdcPurchaseDate.setDateFormatString("yyyy-MM-dd");
+        jPanel1.add(jdcPurchaseDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 30, 180, -1));
+
+        jLabel12.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel12.setText("PURCHASES");
+        jPanel1.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 0, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1130, 480));
 
@@ -572,6 +575,7 @@ private void deletePurchase() {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -583,11 +587,11 @@ private void deletePurchase() {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private com.toedter.calendar.JDateChooser jdcPurchaseDate;
     private javax.swing.JTable purchaseTable;
     private javax.swing.JTextField txtAmountDue;
     private javax.swing.JTextField txtAmountPaid;
     private javax.swing.JTextField txtNetAmount;
-    private javax.swing.JTextField txtPurchaseDate;
     private javax.swing.JTextField txtSupplierName;
     private javax.swing.JTextField txtSupplierPhone;
     private javax.swing.JTextField txtTotalAmount;
