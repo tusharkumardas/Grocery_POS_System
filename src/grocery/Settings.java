@@ -17,10 +17,10 @@ import Project.Session;
  */
 public class Settings extends javax.swing.JFrame {
     private void clearUserFields() {
-    jTextField5.setText("");
-    jTextField6.setText("");
-    jComboBox3.setSelectedIndex(0);
-    jComboBox2.setSelectedIndex(0);
+    txtUsername.setText("");
+    txtPassword.setText("");
+    cmbRole.setSelectedIndex(0);
+    cmbStatus.setSelectedIndex(0);
 }
 private void loadUsersTable() {
     DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
@@ -76,7 +76,129 @@ private void saveCompanyInfo() {
         e.printStackTrace();
     }
 }
+    private void deleteSelectedUser() {
+    int row = jTable1.getSelectedRow();
 
+    if (row == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a user to delete");
+        return;
+    }
+
+    String username = jTable1.getValueAt(row, 0).toString();
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to delete user: " + username + "?",
+        "Confirm Delete",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm != JOptionPane.YES_OPTION) return;
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        PreparedStatement ps = con.prepareStatement(
+            "DELETE FROM users WHERE username = ?"
+        );
+        ps.setString(1, username);
+        ps.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "User deleted successfully");
+        loadUsersTable();
+        clearUserFields();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error deleting user");
+    }
+}
+ 
+    private void populateUserFields() {
+    int row = jTable1.getSelectedRow();
+    if (row == -1) return;
+
+    txtUsername.setText(jTable1.getValueAt(row, 0).toString());
+    txtPassword.setText(jTable1.getValueAt(row, 1).toString());
+    cmbRole.setSelectedItem(jTable1.getValueAt(row, 2).toString());
+    cmbStatus.setSelectedItem(jTable1.getValueAt(row, 3).toString());
+
+    // IMPORTANT: password field always blank
+    txtPassword.setText("");
+}
+    private void updateUserOrResetPassword() {
+
+    int row = jTable1.getSelectedRow();
+    if (row == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a user first");
+        return;
+    }
+
+    String username = txtUsername.getText().trim();
+    String role = cmbRole.getSelectedItem().toString();
+    String status = cmbStatus.getSelectedItem().toString();
+    String newPassword = new String(txtPassword.getPassword()).trim();
+
+    if (username.isEmpty() || role.equals("--ROLE--")) {
+        JOptionPane.showMessageDialog(this, "Username and Role are required");
+        return;
+    }
+
+    try (Connection con = ConnectionProvider.getCon()) {
+
+        PreparedStatement ps;
+
+        // 🔹 CASE 1: Password NOT entered → update only role & status
+        if (newPassword.isEmpty()) {
+
+            String sql = """
+                UPDATE users
+                SET role = ?, status = ?
+                WHERE username = ?
+            """;
+
+            ps = con.prepareStatement(sql);
+            ps.setString(1, role.toLowerCase());
+            ps.setString(2, status.toLowerCase());
+            ps.setString(3, username);
+
+        } 
+        // 🔹 CASE 2: Password entered → hash & update everything
+        else {
+
+            if (!newPassword.matches("\\d{6}")) {
+                JOptionPane.showMessageDialog(this, "Password must be exactly 6 digits");
+                return;
+            }
+
+            String hashedPin = PinUtil.hashPin(newPassword);
+
+            String sql = """
+                UPDATE users
+                SET pin_hash = ?, role = ?, status = ?
+                WHERE username = ?
+            """;
+
+            ps = con.prepareStatement(sql);
+            ps.setString(1, hashedPin);
+            ps.setString(2, role.toLowerCase());
+            ps.setString(3, status.toLowerCase());
+            ps.setString(4, username);
+        }
+
+        ps.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "User updated successfully");
+        loadUsersTable();
+        clearUserFields();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error updating user");
+    }
+}
+
+
+
+    
     /**
      * Creates new form Settings
      */
@@ -88,6 +210,16 @@ private void saveCompanyInfo() {
 }
         loadUsersTable();
         loadCompanyInfo();
+        jTable1.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyPressed(java.awt.event.KeyEvent evt) {
+         if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+            evt.consume(); // prevent row jump
+            populateUserFields();
+        }
+    }
+});
+
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
@@ -109,19 +241,18 @@ private void saveCompanyInfo() {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
-        jTextField5 = new javax.swing.JTextField();
-        jComboBox2 = new javax.swing.JComboBox<>();
+        txtUsername = new javax.swing.JTextField();
+        cmbStatus = new javax.swing.JComboBox<>();
         jButton2 = new javax.swing.JButton();
-        jComboBox3 = new javax.swing.JComboBox<>();
+        cmbRole = new javax.swing.JComboBox<>();
         jLabel9 = new javax.swing.JLabel();
-        jTextField6 = new javax.swing.JTextField();
         jTextField7 = new javax.swing.JTextField();
         jButton5 = new javax.swing.JButton();
+        txtPassword = new javax.swing.JPasswordField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -156,11 +287,14 @@ private void saveCompanyInfo() {
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 490, 270));
 
-        jButton1.setText("UPDATE USER");
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 420, 130, -1));
-
-        jButton3.setText("RESET PASSWORD");
-        jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 420, 130, -1));
+        jButton1.setBackground(new java.awt.Color(204, 255, 255));
+        jButton1.setText("UPDATE USER OR RESET PASSWORD");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 420, 270, -1));
 
         jButton4.setText("ADD USER");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
@@ -179,20 +313,24 @@ private void saveCompanyInfo() {
 
         jLabel8.setText("GST No.:");
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(121, 80, -1, -1));
-        jPanel1.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 210, 152, -1));
+        jPanel1.add(txtUsername, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 210, 152, -1));
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ACTIVE", "INACTIVE" }));
-        jPanel1.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 300, -1, -1));
+        cmbStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ACTIVE", "INACTIVE" }));
+        jPanel1.add(cmbStatus, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 300, -1, -1));
 
         jButton2.setText("DELETE USER");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
         jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 390, 130, -1));
 
-        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--ROLE--", "ADMIN", "MANAGER", "CASHIER" }));
-        jPanel1.add(jComboBox3, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 300, -1, -1));
+        cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--ROLE--", "ADMIN", "MANAGER", "CASHIER" }));
+        jPanel1.add(cmbRole, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 300, -1, -1));
 
         jLabel9.setText("Password:");
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 250, -1, -1));
-        jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 250, 152, -1));
         jPanel1.add(jTextField7, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 37, 152, -1));
 
         jButton5.setText("SAVE INFO");
@@ -202,6 +340,7 @@ private void saveCompanyInfo() {
             }
         });
         jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 110, 140, 30));
+        jPanel1.add(txtPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 250, 150, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 840, 470));
 
@@ -210,10 +349,10 @@ private void saveCompanyInfo() {
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
-    String username = jTextField5.getText().trim();   // Username
-    String pin = jTextField6.getText().trim();        // PIN
-    String role = jComboBox3.getSelectedItem().toString();
-    String status = jComboBox2.getSelectedItem().toString();
+    String username = txtUsername.getText().trim();   // Username
+    String pin = txtPassword.getText().trim();        // PIN
+    String role = cmbRole.getSelectedItem().toString();
+    String status = cmbStatus.getSelectedItem().toString();
 
     if (username.isEmpty() || pin.isEmpty() || role.equals("--ROLE--")) {
         JOptionPane.showMessageDialog(this, "All fields are required");
@@ -255,6 +394,16 @@ private void saveCompanyInfo() {
         saveCompanyInfo();
     }//GEN-LAST:event_jButton5ActionPerformed
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        deleteSelectedUser();
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        updateUserOrResetPassword();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -291,13 +440,12 @@ private void saveCompanyInfo() {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbRole;
+    private javax.swing.JComboBox<String> cmbStatus;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JComboBox<String> jComboBox2;
-    private javax.swing.JComboBox<String> jComboBox3;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -310,8 +458,8 @@ private void saveCompanyInfo() {
     private javax.swing.JTable jTable1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
     private javax.swing.JTextField jTextField7;
+    private javax.swing.JPasswordField txtPassword;
+    private javax.swing.JTextField txtUsername;
     // End of variables declaration//GEN-END:variables
 }
