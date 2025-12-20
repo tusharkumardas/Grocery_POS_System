@@ -4,6 +4,8 @@
  */
 package grocery;
 import javax.swing.JOptionPane;
+import Project.AuthService;
+import Project.Session;
 /**
  *
  * @author Tushar Kumar Das
@@ -124,7 +126,32 @@ public class LoginForm extends javax.swing.JFrame {
     }
 
     // TEMP check
-    System.out.println("UI validation passed");
+    try {
+    boolean success = AuthService.login(
+        username,
+        role,
+        new String(pin)
+    );
+
+    if (success) {
+        //JOptionPane.showMessageDialog(this, "Login successful");
+
+         Session.username = username;
+         Session.role = role;
+
+    // Launch main dashboard
+    NewJFrame dashboard = new NewJFrame();
+    dashboard.setVisible(true);
+
+    // Close login window
+    this.dispose();
+    }
+
+} catch (Exception e) {
+    JOptionPane.showMessageDialog(this, e.getMessage());
+    txtPassword.setText("");
+}
+
 
     }//GEN-LAST:event_jButton1ActionPerformed
 
