@@ -3,18 +3,92 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package grocery;
-
+import javax.swing.JOptionPane;
+import Project.ConnectionProvider;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import Project.PinUtil;
+import javax.swing.table.DefaultTableModel;
+import java.sql.ResultSet;
+import Project.Session;
 /**
  *
  * @author Tushar Kumar Das
  */
 public class Settings extends javax.swing.JFrame {
+    private void clearUserFields() {
+    jTextField5.setText("");
+    jTextField6.setText("");
+    jComboBox3.setSelectedIndex(0);
+    jComboBox2.setSelectedIndex(0);
+}
+private void loadUsersTable() {
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.setRowCount(0);
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        ResultSet rs = con.prepareStatement(
+            "SELECT username, role, status, created_at FROM users"
+        ).executeQuery();
+
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getString("username"),
+                rs.getString("role"),
+                rs.getString("status"),
+                rs.getTimestamp("created_at")
+            });
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+private void loadCompanyInfo() {
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT * FROM company_settings WHERE id = 1";
+        PreparedStatement pst = con.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            jTextField7.setText(rs.getString("company_name"));
+            jTextField2.setText(rs.getString("gst_no"));
+            jTextField3.setText(rs.getString("contact_no"));
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+private void saveCompanyInfo() {
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = """
+            UPDATE company_settings
+            SET company_name=?, gst_no=?, contact_no=?
+            WHERE id=1
+        """;
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, jTextField7.getText().trim());
+        pst.setString(2, jTextField2.getText().trim());
+        pst.setString(3, jTextField3.getText().trim());
+        pst.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "Company info saved");
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 
     /**
      * Creates new form Settings
      */
     public Settings() {
         initComponents();
+        if (!"admin".equalsIgnoreCase(Session.role)) {
+        JOptionPane.showMessageDialog(this, "Admin access only");
+        dispose();
+}
+        loadUsersTable();
+        loadCompanyInfo();
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     /**
@@ -27,11 +101,8 @@ public class Settings extends javax.swing.JFrame {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
         jTextField3 = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
@@ -44,14 +115,13 @@ public class Settings extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jTextField5 = new javax.swing.JTextField();
-        jComboBox1 = new javax.swing.JComboBox<>();
         jComboBox2 = new javax.swing.JComboBox<>();
         jButton2 = new javax.swing.JButton();
         jComboBox3 = new javax.swing.JComboBox<>();
         jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
         jTextField6 = new javax.swing.JTextField();
         jTextField7 = new javax.swing.JTextField();
+        jButton5 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -59,19 +129,11 @@ public class Settings extends javax.swing.JFrame {
         jPanel1.setBackground(new java.awt.Color(236, 233, 233));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel1.setText("Preferences");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 10, -1, -1));
-
-        jLabel2.setText("Default printer for Bill:");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(500, 40, -1, -1));
-
         jLabel3.setText("Username:");
         jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 210, -1, -1));
 
         jLabel4.setText("Contact No.:");
         jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(121, 117, -1, -1));
-        jPanel1.add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 40, 200, -1));
         jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 77, 152, -1));
         jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 117, 152, -1));
 
@@ -95,13 +157,18 @@ public class Settings extends javax.swing.JFrame {
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 490, 270));
 
         jButton1.setText("UPDATE USER");
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 420, 130, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 420, 130, -1));
 
         jButton3.setText("RESET PASSWORD");
         jPanel1.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 420, 130, -1));
 
         jButton4.setText("ADD USER");
-        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 380, 130, -1));
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 390, 130, -1));
 
         jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jLabel6.setText("Company Info");
@@ -114,30 +181,79 @@ public class Settings extends javax.swing.JFrame {
         jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(121, 80, -1, -1));
         jPanel1.add(jTextField5, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 210, 152, -1));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "----------SELECT--------", "Afghan Afghan – ؋", "Albanian Lek – ", "Algerian Dinar – د.ج", "Angolan Kwanza – Kz", "Argentine Peso – $", "Armenian Dram – ֏", "Aruban Florin – ƒ", "Australian Dollar – $", "Azerbaijani Manat – ₼", "Bahamian Dollar – $", "Bahraini Dinar – .د.ب", "Bangladeshi Taka – ৳", "Barbadian Dollar – $", "Belarusian Ruble – Br", "Belize Dollar – $", "Bermudian Dollar – $", "Bhutanese Ngultrum – Nu.", "Bolivian Boliviano – Bs.", "Bosnia-Herzegovina Convertible Mark – KM", "Botswana Pula – P", "Brazilian Real – R$", "British Pound – £", "Brunei Dollar – $", "Bulgarian Lev – лв", "Burundian Franc – FBu", "Cambodian Riel – ៛", "Canadian Dollar – $", "Cape Verdean Escudo – $", "Cayman Islands Dollar – $", "Central African CFA Franc – Fr", "Chilean Peso – $", "Chinese Yuan – ¥", "Colombian Peso – $", "Comorian Franc – Fr", "Congolese Franc – Fr", "Costa Rican Colón – ₡", "Croatian Kuna – kn", "Cuban Peso – ₱", "Czech Koruna – Kč", "Danish Krone – kr", "Djiboutian Franc – Fr", "Dominican Peso – RD$", "Egyptian Pound – £", "Eritrean Nakfa – Nfk", "Ethiopian Birr – Br", "Euro – €", "Fijian Dollar – $", "Gambian Dalasi – D", "Georgian Lari – ₾", "Ghanaian Cedi – ₵", "Gibraltar Pound – £", "Guatemalan Quetzal – Q", "Guinean Franc – Fr", "Guyanese Dollar – $", "Haitian Gourde – G", "Honduran Lempira – L", "Hong Kong Dollar – $", "Hungarian Forint – Ft", "Icelandic Króna – kr", "Indian Rupee – ₹", "Indonesian Rupiah – Rp", "Iranian Rial – ﷼", "Iraqi Dinar – ع.د", "Israeli Shekel – ₪", "Jamaican Dollar – $", "Japanese Yen – ¥", "Jordanian Dinar – د.ا", "Kazakhstani Tenge – ₸", "Kenyan Shilling – Sh", "Kuwaiti Dinar – د.ك", "Kyrgyzstani Som – с", "Lao Kip – ₭", "Lebanese Pound – ل.ل", "Lesotho Loti – L", "Liberian Dollar – $", "Libyan Dinar – ل.د", "Macanese Pataca – P", "Macedonian Denar – ден", "Malagasy Ariary – Ar", "Malawian Kwacha – MK", "Malaysian Ringgit – RM", "Maldivian Rufiyaa – Rf", "Mauritanian Ouguiya – UM", "Mauritian Rupee – ₨", "Mexican Peso – $", "Moldovan Leu – L", "Mongolian Tögrög – ₮", "Moroccan Dirham – د.م", "Mozambican Metical – MT", "Myanmar Kyat – K", "Namibian Dollar – $", "Nepalese Rupee – ₨", "Netherlands Antillean Guilder – ƒ", "New Taiwan Dollar – NT$", "New Zealand Dollar – $", "Nicaraguan Córdoba – C$", "Nigerian Naira – ₦", "North Korean Won – ₩", "Norwegian Krone – kr", "Omani Rial – ﷼", "Pakistani Rupee – ₨", "Panamanian Balboa – B/.", "Papua New Guinean Kina – K", "Paraguayan Guaraní – ₲", "Peruvian Sol – S/.", "Philippine Peso – ₱", "Polish Zloty – zł", "Qatari Riyal – ر.ق", "Romanian Leu – lei", "Russian Ruble – ₽", "Rwandan Franc – Fr", "Samoan Tala – T", "São Tomé & Príncipe Dobra – Db", "Saudi Riyal – ر.س", "Serbian Dinar – дин", "Seychellois Rupee – ₨", "Sierra Leonean Leone – Le", "Singapore Dollar – $", "Solomon Islands Dollar – $", "Somali Shilling – Sh", "South African Rand – R", "South Korean Won – ₩", "South Sudanese Pound – £", "Sri Lankan Rupee – ₨", "Sudanese Pound – ج.س", "Surinamese Dollar – $", "Swedish Krona – kr", "Swiss Franc – Fr", "Syrian Pound – £", "Tajikistani Somoni – ЅМ", "Tanzanian Shilling – Sh", "Thai Baht – ฿", "Tongan Paʻanga – T$", "Trinidad & Tobago Dollar – TT$", "Tunisian Dinar – د.ت", "Turkish Lira – ₺", "Turkmenistani Manat – m", "Ugandan Shilling – Sh", "Ukrainian Hryvnia – ₴", "UAE Dirham – د.إ", "US Dollar – $", "Uruguayan Peso – $U", "Uzbekistani Som – soʻm", "Vanuatu Vatu – VT", "Venezuelan Bolívar – Bs.", "Vietnamese Dong – ₫", "West African CFA Franc – Fr", "CFP Franc – Fr", "Yemeni Rial – ﷼", "Zambian Kwacha – ZK", "Zimbabwean Dollar – Z$" }));
-        jPanel1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 80, 200, -1));
-
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "ACTIVE", "INACTIVE" }));
         jPanel1.add(jComboBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(680, 300, -1, -1));
 
         jButton2.setText("DELETE USER");
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 380, 130, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 390, 130, -1));
 
         jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--ROLE--", "ADMIN", "MANAGER", "CASHIER" }));
         jPanel1.add(jComboBox3, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 300, -1, -1));
 
         jLabel9.setText("Password:");
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 250, -1, -1));
-
-        jLabel10.setText("Currency:");
-        jPanel1.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 80, -1, -1));
         jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 250, 152, -1));
         jPanel1.add(jTextField7, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 37, 152, -1));
+
+        jButton5.setText("SAVE INFO");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 110, 140, 30));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 840, 470));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        // TODO add your handling code here:
+    String username = jTextField5.getText().trim();   // Username
+    String pin = jTextField6.getText().trim();        // PIN
+    String role = jComboBox3.getSelectedItem().toString();
+    String status = jComboBox2.getSelectedItem().toString();
+
+    if (username.isEmpty() || pin.isEmpty() || role.equals("--ROLE--")) {
+        JOptionPane.showMessageDialog(this, "All fields are required");
+        return;
+    }
+
+    if (!pin.matches("\\d{6}")) {
+        JOptionPane.showMessageDialog(this, "PIN must be exactly 6 digits");
+        return;
+    }
+
+    String pinHash = PinUtil.hashPin(pin);
+
+    try (Connection con = ConnectionProvider.getCon()) {
+
+        String sql = """
+            INSERT INTO users (username, pin_hash, role, status)
+            VALUES (?, ?, ?, ?)
+        """;
+
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, username);
+        pst.setString(2, pinHash);
+        pst.setString(3, role.toLowerCase());
+        pst.setString(4, status.toLowerCase());
+        pst.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "User created successfully");
+        loadUsersTable();
+        clearUserFields();
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Username already exists");
+    }
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        saveCompanyInfo();
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -179,12 +295,9 @@ public class Settings extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
-    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JButton jButton5;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JComboBox<String> jComboBox3;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -195,7 +308,6 @@ public class Settings extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField5;

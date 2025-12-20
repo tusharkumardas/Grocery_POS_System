@@ -41,29 +41,6 @@
         <Property name="useNullLayout" type="boolean" value="false"/>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JLabel" name="jLabel1">
-          <Properties>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Segoe UI" size="18" style="1"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="Preferences"/>
-          </Properties>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="420" y="10" width="-1" height="-1"/>
-            </Constraint>
-          </Constraints>
-        </Component>
-        <Component class="javax.swing.JLabel" name="jLabel2">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Default printer for Bill:"/>
-          </Properties>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="500" y="40" width="-1" height="-1"/>
-            </Constraint>
-          </Constraints>
-        </Component>
         <Component class="javax.swing.JLabel" name="jLabel3">
           <Properties>
             <Property name="text" type="java.lang.String" value="Username:"/>
@@ -81,13 +58,6 @@
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
               <AbsoluteConstraints x="121" y="117" width="-1" height="-1"/>
-            </Constraint>
-          </Constraints>
-        </Component>
-        <Component class="javax.swing.JTextField" name="jTextField1">
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="630" y="40" width="200" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -151,7 +121,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="540" y="420" width="130" height="-1"/>
+              <AbsoluteConstraints x="550" y="420" width="130" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -169,9 +139,12 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="ADD USER"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton4ActionPerformed"/>
+          </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="540" y="380" width="130" height="-1"/>
+              <AbsoluteConstraints x="550" y="390" width="130" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -215,174 +188,6 @@
             </Constraint>
           </Constraints>
         </Component>
-        <Component class="javax.swing.JComboBox" name="jComboBox1">
-          <Properties>
-            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="152">
-                <StringItem index="0" value="----------SELECT--------"/>
-                <StringItem index="1" value="Afghan Afghan &#x2013; &#x60b;"/>
-                <StringItem index="2" value="Albanian Lek &#x2013; "/>
-                <StringItem index="3" value="Algerian Dinar &#x2013; &#x62f;.&#x62c;"/>
-                <StringItem index="4" value="Angolan Kwanza &#x2013; Kz"/>
-                <StringItem index="5" value="Argentine Peso &#x2013; $"/>
-                <StringItem index="6" value="Armenian Dram &#x2013; &#x58f;"/>
-                <StringItem index="7" value="Aruban Florin &#x2013; &#x192;"/>
-                <StringItem index="8" value="Australian Dollar &#x2013; $"/>
-                <StringItem index="9" value="Azerbaijani Manat &#x2013; &#x20bc;"/>
-                <StringItem index="10" value="Bahamian Dollar &#x2013; $"/>
-                <StringItem index="11" value="Bahraini Dinar &#x2013; .&#x62f;.&#x628;"/>
-                <StringItem index="12" value="Bangladeshi Taka &#x2013; &#x9f3;"/>
-                <StringItem index="13" value="Barbadian Dollar &#x2013; $"/>
-                <StringItem index="14" value="Belarusian Ruble &#x2013; Br"/>
-                <StringItem index="15" value="Belize Dollar &#x2013; $"/>
-                <StringItem index="16" value="Bermudian Dollar &#x2013; $"/>
-                <StringItem index="17" value="Bhutanese Ngultrum &#x2013; Nu."/>
-                <StringItem index="18" value="Bolivian Boliviano &#x2013; Bs."/>
-                <StringItem index="19" value="Bosnia-Herzegovina Convertible Mark &#x2013; KM"/>
-                <StringItem index="20" value="Botswana Pula &#x2013; P"/>
-                <StringItem index="21" value="Brazilian Real &#x2013; R$"/>
-                <StringItem index="22" value="British Pound &#x2013; &#xa3;"/>
-                <StringItem index="23" value="Brunei Dollar &#x2013; $"/>
-                <StringItem index="24" value="Bulgarian Lev &#x2013; &#x43b;&#x432;"/>
-                <StringItem index="25" value="Burundian Franc &#x2013; FBu"/>
-                <StringItem index="26" value="Cambodian Riel &#x2013; &#x17db;"/>
-                <StringItem index="27" value="Canadian Dollar &#x2013; $"/>
-                <StringItem index="28" value="Cape Verdean Escudo &#x2013; $"/>
-                <StringItem index="29" value="Cayman Islands Dollar &#x2013; $"/>
-                <StringItem index="30" value="Central African CFA Franc &#x2013; Fr"/>
-                <StringItem index="31" value="Chilean Peso &#x2013; $"/>
-                <StringItem index="32" value="Chinese Yuan &#x2013; &#xa5;"/>
-                <StringItem index="33" value="Colombian Peso &#x2013; $"/>
-                <StringItem index="34" value="Comorian Franc &#x2013; Fr"/>
-                <StringItem index="35" value="Congolese Franc &#x2013; Fr"/>
-                <StringItem index="36" value="Costa Rican Col&#xf3;n &#x2013; &#x20a1;"/>
-                <StringItem index="37" value="Croatian Kuna &#x2013; kn"/>
-                <StringItem index="38" value="Cuban Peso &#x2013; &#x20b1;"/>
-                <StringItem index="39" value="Czech Koruna &#x2013; K&#x10d;"/>
-                <StringItem index="40" value="Danish Krone &#x2013; kr"/>
-                <StringItem index="41" value="Djiboutian Franc &#x2013; Fr"/>
-                <StringItem index="42" value="Dominican Peso &#x2013; RD$"/>
-                <StringItem index="43" value="Egyptian Pound &#x2013; &#xa3;"/>
-                <StringItem index="44" value="Eritrean Nakfa &#x2013; Nfk"/>
-                <StringItem index="45" value="Ethiopian Birr &#x2013; Br"/>
-                <StringItem index="46" value="Euro &#x2013; &#x20ac;"/>
-                <StringItem index="47" value="Fijian Dollar &#x2013; $"/>
-                <StringItem index="48" value="Gambian Dalasi &#x2013; D"/>
-                <StringItem index="49" value="Georgian Lari &#x2013; &#x20be;"/>
-                <StringItem index="50" value="Ghanaian Cedi &#x2013; &#x20b5;"/>
-                <StringItem index="51" value="Gibraltar Pound &#x2013; &#xa3;"/>
-                <StringItem index="52" value="Guatemalan Quetzal &#x2013; Q"/>
-                <StringItem index="53" value="Guinean Franc &#x2013; Fr"/>
-                <StringItem index="54" value="Guyanese Dollar &#x2013; $"/>
-                <StringItem index="55" value="Haitian Gourde &#x2013; G"/>
-                <StringItem index="56" value="Honduran Lempira &#x2013; L"/>
-                <StringItem index="57" value="Hong Kong Dollar &#x2013; $"/>
-                <StringItem index="58" value="Hungarian Forint &#x2013; Ft"/>
-                <StringItem index="59" value="Icelandic Kr&#xf3;na &#x2013; kr"/>
-                <StringItem index="60" value="Indian Rupee &#x2013; &#x20b9;"/>
-                <StringItem index="61" value="Indonesian Rupiah &#x2013; Rp"/>
-                <StringItem index="62" value="Iranian Rial &#x2013; &#xfdfc;"/>
-                <StringItem index="63" value="Iraqi Dinar &#x2013; &#x639;.&#x62f;"/>
-                <StringItem index="64" value="Israeli Shekel &#x2013; &#x20aa;"/>
-                <StringItem index="65" value="Jamaican Dollar &#x2013; $"/>
-                <StringItem index="66" value="Japanese Yen &#x2013; &#xa5;"/>
-                <StringItem index="67" value="Jordanian Dinar &#x2013; &#x62f;.&#x627;"/>
-                <StringItem index="68" value="Kazakhstani Tenge &#x2013; &#x20b8;"/>
-                <StringItem index="69" value="Kenyan Shilling &#x2013; Sh"/>
-                <StringItem index="70" value="Kuwaiti Dinar &#x2013; &#x62f;.&#x643;"/>
-                <StringItem index="71" value="Kyrgyzstani Som &#x2013; &#x441;"/>
-                <StringItem index="72" value="Lao Kip &#x2013; &#x20ad;"/>
-                <StringItem index="73" value="Lebanese Pound &#x2013; &#x644;.&#x644;"/>
-                <StringItem index="74" value="Lesotho Loti &#x2013; L"/>
-                <StringItem index="75" value="Liberian Dollar &#x2013; $"/>
-                <StringItem index="76" value="Libyan Dinar &#x2013; &#x644;.&#x62f;"/>
-                <StringItem index="77" value="Macanese Pataca &#x2013; P"/>
-                <StringItem index="78" value="Macedonian Denar &#x2013; &#x434;&#x435;&#x43d;"/>
-                <StringItem index="79" value="Malagasy Ariary &#x2013; Ar"/>
-                <StringItem index="80" value="Malawian Kwacha &#x2013; MK"/>
-                <StringItem index="81" value="Malaysian Ringgit &#x2013; RM"/>
-                <StringItem index="82" value="Maldivian Rufiyaa &#x2013; Rf"/>
-                <StringItem index="83" value="Mauritanian Ouguiya &#x2013; UM"/>
-                <StringItem index="84" value="Mauritian Rupee &#x2013; &#x20a8;"/>
-                <StringItem index="85" value="Mexican Peso &#x2013; $"/>
-                <StringItem index="86" value="Moldovan Leu &#x2013; L"/>
-                <StringItem index="87" value="Mongolian T&#xf6;gr&#xf6;g &#x2013; &#x20ae;"/>
-                <StringItem index="88" value="Moroccan Dirham &#x2013; &#x62f;.&#x645;"/>
-                <StringItem index="89" value="Mozambican Metical &#x2013; MT"/>
-                <StringItem index="90" value="Myanmar Kyat &#x2013; K"/>
-                <StringItem index="91" value="Namibian Dollar &#x2013; $"/>
-                <StringItem index="92" value="Nepalese Rupee &#x2013; &#x20a8;"/>
-                <StringItem index="93" value="Netherlands Antillean Guilder &#x2013; &#x192;"/>
-                <StringItem index="94" value="New Taiwan Dollar &#x2013; NT$"/>
-                <StringItem index="95" value="New Zealand Dollar &#x2013; $"/>
-                <StringItem index="96" value="Nicaraguan C&#xf3;rdoba &#x2013; C$"/>
-                <StringItem index="97" value="Nigerian Naira &#x2013; &#x20a6;"/>
-                <StringItem index="98" value="North Korean Won &#x2013; &#x20a9;"/>
-                <StringItem index="99" value="Norwegian Krone &#x2013; kr"/>
-                <StringItem index="100" value="Omani Rial &#x2013; &#xfdfc;"/>
-                <StringItem index="101" value="Pakistani Rupee &#x2013; &#x20a8;"/>
-                <StringItem index="102" value="Panamanian Balboa &#x2013; B/."/>
-                <StringItem index="103" value="Papua New Guinean Kina &#x2013; K"/>
-                <StringItem index="104" value="Paraguayan Guaran&#xed; &#x2013; &#x20b2;"/>
-                <StringItem index="105" value="Peruvian Sol &#x2013; S/."/>
-                <StringItem index="106" value="Philippine Peso &#x2013; &#x20b1;"/>
-                <StringItem index="107" value="Polish Zloty &#x2013; z&#x142;"/>
-                <StringItem index="108" value="Qatari Riyal &#x2013; &#x631;.&#x642;"/>
-                <StringItem index="109" value="Romanian Leu &#x2013; lei"/>
-                <StringItem index="110" value="Russian Ruble &#x2013; &#x20bd;"/>
-                <StringItem index="111" value="Rwandan Franc &#x2013; Fr"/>
-                <StringItem index="112" value="Samoan Tala &#x2013; T"/>
-                <StringItem index="113" value="S&#xe3;o Tom&#xe9; &amp; Pr&#xed;ncipe Dobra &#x2013; Db"/>
-                <StringItem index="114" value="Saudi Riyal &#x2013; &#x631;.&#x633;"/>
-                <StringItem index="115" value="Serbian Dinar &#x2013; &#x434;&#x438;&#x43d;"/>
-                <StringItem index="116" value="Seychellois Rupee &#x2013; &#x20a8;"/>
-                <StringItem index="117" value="Sierra Leonean Leone &#x2013; Le"/>
-                <StringItem index="118" value="Singapore Dollar &#x2013; $"/>
-                <StringItem index="119" value="Solomon Islands Dollar &#x2013; $"/>
-                <StringItem index="120" value="Somali Shilling &#x2013; Sh"/>
-                <StringItem index="121" value="South African Rand &#x2013; R"/>
-                <StringItem index="122" value="South Korean Won &#x2013; &#x20a9;"/>
-                <StringItem index="123" value="South Sudanese Pound &#x2013; &#xa3;"/>
-                <StringItem index="124" value="Sri Lankan Rupee &#x2013; &#x20a8;"/>
-                <StringItem index="125" value="Sudanese Pound &#x2013; &#x62c;.&#x633;"/>
-                <StringItem index="126" value="Surinamese Dollar &#x2013; $"/>
-                <StringItem index="127" value="Swedish Krona &#x2013; kr"/>
-                <StringItem index="128" value="Swiss Franc &#x2013; Fr"/>
-                <StringItem index="129" value="Syrian Pound &#x2013; &#xa3;"/>
-                <StringItem index="130" value="Tajikistani Somoni &#x2013; &#x405;&#x41c;"/>
-                <StringItem index="131" value="Tanzanian Shilling &#x2013; Sh"/>
-                <StringItem index="132" value="Thai Baht &#x2013; &#xe3f;"/>
-                <StringItem index="133" value="Tongan Pa&#x2bb;anga &#x2013; T$"/>
-                <StringItem index="134" value="Trinidad &amp; Tobago Dollar &#x2013; TT$"/>
-                <StringItem index="135" value="Tunisian Dinar &#x2013; &#x62f;.&#x62a;"/>
-                <StringItem index="136" value="Turkish Lira &#x2013; &#x20ba;"/>
-                <StringItem index="137" value="Turkmenistani Manat &#x2013; m"/>
-                <StringItem index="138" value="Ugandan Shilling &#x2013; Sh"/>
-                <StringItem index="139" value="Ukrainian Hryvnia &#x2013; &#x20b4;"/>
-                <StringItem index="140" value="UAE Dirham &#x2013; &#x62f;.&#x625;"/>
-                <StringItem index="141" value="US Dollar &#x2013; $"/>
-                <StringItem index="142" value="Uruguayan Peso &#x2013; $U"/>
-                <StringItem index="143" value="Uzbekistani Som &#x2013; so&#x2bb;m"/>
-                <StringItem index="144" value="Vanuatu Vatu &#x2013; VT"/>
-                <StringItem index="145" value="Venezuelan Bol&#xed;var &#x2013; Bs."/>
-                <StringItem index="146" value="Vietnamese Dong &#x2013; &#x20ab;"/>
-                <StringItem index="147" value="West African CFA Franc &#x2013; Fr"/>
-                <StringItem index="148" value="CFP Franc &#x2013; Fr"/>
-                <StringItem index="149" value="Yemeni Rial &#x2013; &#xfdfc;"/>
-                <StringItem index="150" value="Zambian Kwacha &#x2013; ZK"/>
-                <StringItem index="151" value="Zimbabwean Dollar &#x2013; Z$"/>
-              </StringArray>
-            </Property>
-          </Properties>
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
-          </AuxValues>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="630" y="80" width="200" height="-1"/>
-            </Constraint>
-          </Constraints>
-        </Component>
         <Component class="javax.swing.JComboBox" name="jComboBox2">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
@@ -407,7 +212,7 @@
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="690" y="380" width="130" height="-1"/>
+              <AbsoluteConstraints x="690" y="390" width="130" height="-1"/>
             </Constraint>
           </Constraints>
         </Component>
@@ -441,16 +246,6 @@
             </Constraint>
           </Constraints>
         </Component>
-        <Component class="javax.swing.JLabel" name="jLabel10">
-          <Properties>
-            <Property name="text" type="java.lang.String" value="Currency:"/>
-          </Properties>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="520" y="80" width="-1" height="-1"/>
-            </Constraint>
-          </Constraints>
-        </Component>
         <Component class="javax.swing.JTextField" name="jTextField6">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
@@ -462,6 +257,19 @@
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
               <AbsoluteConstraints x="227" y="37" width="152" height="-1"/>
+            </Constraint>
+          </Constraints>
+        </Component>
+        <Component class="javax.swing.JButton" name="jButton5">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="SAVE INFO"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton5ActionPerformed"/>
+          </Events>
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
+              <AbsoluteConstraints x="410" y="110" width="140" height="30"/>
             </Constraint>
           </Constraints>
         </Component>
