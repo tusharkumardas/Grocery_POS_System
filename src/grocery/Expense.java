@@ -17,7 +17,7 @@ import Project.ExpensePDFExporter;
  */
 public class Expense extends javax.swing.JFrame {
 private void clearExpenseFields() {
-    txtDate.setText("");
+    jdcExpenseDate.setDate(null);
     cmbCategory.setSelectedIndex(0);
     txtDescription.setText("");
     txtAmount.setText("");
@@ -43,16 +43,14 @@ private void clearExpenseFields() {
         String sql = "SELECT id, expense_code, expense_date, category, description, amount, payment_mode, created_at FROM expenses WHERE 1=1";
 
         if (jRadioButton1.isSelected()) { // Search by date range
-            String fromDate = jTextField4.getText().trim();
-            String toDate = jTextField2.getText().trim();
 
-            if (!fromDate.isEmpty() && !toDate.isEmpty()) {
-                sql += " AND expense_date BETWEEN ? AND ?";
-            } else {
-                JOptionPane.showMessageDialog(this, "Please enter both FROM and TO dates!");
-                return;
-            }
-        }
+    if (jdcFromDate.getDate() == null || jdcToDate.getDate() == null) {
+        JOptionPane.showMessageDialog(this, "Please select both FROM and TO dates!");
+        return;
+    }
+
+      sql += " AND expense_date BETWEEN ? AND ?";
+     }
 
         if (jRadioButton2.isSelected()) { // Search by category
             String category = jComboBox3.getSelectedItem().toString();
@@ -68,8 +66,18 @@ private void clearExpenseFields() {
 
         int paramIndex = 1;
         if (jRadioButton1.isSelected()) {
-            ps.setDate(paramIndex++, java.sql.Date.valueOf(jTextField4.getText().trim()));
-            ps.setDate(paramIndex++, java.sql.Date.valueOf(jTextField2.getText().trim()));
+            if (jdcFromDate.getDate() == null || jdcToDate.getDate() == null) {
+        JOptionPane.showMessageDialog(this, "Please select both FROM and TO dates!");
+        return;
+    }
+
+    java.sql.Date fromDate =
+            new java.sql.Date(jdcFromDate.getDate().getTime());
+    java.sql.Date toDate =
+            new java.sql.Date(jdcToDate.getDate().getTime());
+
+           ps.setDate(paramIndex++, fromDate);
+           ps.setDate(paramIndex++, toDate);
         }
 
         if (jRadioButton2.isSelected()) {
@@ -171,7 +179,7 @@ private void clearExpenseFields() {
         double amount,
         String paymentMode
 ) {
-    if (category.equals("--select--") || txtDate.getText().trim().isEmpty() || txtAmount.getText().trim().isEmpty()) {
+    if (category.equals("--select--") || jdcExpenseDate.getDate()==null || txtAmount.getText().trim().isEmpty()) {
         JOptionPane.showMessageDialog(this, "Please fill all required fields!");
         return;
     }
@@ -221,7 +229,6 @@ private void clearExpenseFields() {
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         txtAmount = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
         cmbPaymentMode = new javax.swing.JComboBox<>();
         cmbCategory = new javax.swing.JComboBox<>();
         jButton2 = new javax.swing.JButton();
@@ -231,8 +238,6 @@ private void clearExpenseFields() {
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
         jComboBox3 = new javax.swing.JComboBox<>();
-        txtDate = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -243,6 +248,11 @@ private void clearExpenseFields() {
         jRadioButton1 = new javax.swing.JRadioButton();
         jRadioButton2 = new javax.swing.JRadioButton();
         jButton9 = new javax.swing.JButton();
+        jTextField6 = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        jdcFromDate = new com.toedter.calendar.JDateChooser();
+        jdcToDate = new com.toedter.calendar.JDateChooser();
+        jdcExpenseDate = new com.toedter.calendar.JDateChooser();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -269,7 +279,6 @@ private void clearExpenseFields() {
         jLabel6.setText("Category:");
         jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 50, -1, -1));
         jPanel1.add(txtAmount, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 80, 150, -1));
-        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 370, 110, -1));
 
         cmbPaymentMode.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "UPI", "CASH", "CARD" }));
         jPanel1.add(cmbPaymentMode, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 80, 210, -1));
@@ -333,8 +342,6 @@ private void clearExpenseFields() {
 
         jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "--select--", "Shop Rent / Lease", "Electricity Bill", "Water Bill", "Internet / Phone", "Salaries & Wages", "Transportation / Delivery Charges", "Loading & Unloading Charges", "Packaging Materials ", "Repair & Maintenance", "Pest Control", "Security (CCTV, guards)", "Insurance", "Bank Charges", "Taxes (GST, Municipal, etc.)", "Licenses & Renewals", "Others" }));
         jPanel1.add(jComboBox3, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 370, -1, -1));
-        jPanel1.add(txtDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 50, 150, -1));
-        jPanel1.add(jTextField4, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 370, 110, -1));
 
         jLabel9.setText("TO");
         jPanel1.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 370, -1, -1));
@@ -374,7 +381,7 @@ private void clearExpenseFields() {
         buttonGroup1.add(jRadioButton1);
         jRadioButton1.setSelected(true);
         jRadioButton1.setText("Search by Date:");
-        jPanel1.add(jRadioButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 370, -1, -1));
+        jPanel1.add(jRadioButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 370, -1, -1));
 
         buttonGroup1.add(jRadioButton2);
         jRadioButton2.setText("Search by Category:");
@@ -388,6 +395,20 @@ private void clearExpenseFields() {
             }
         });
         jPanel1.add(jButton9, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 410, -1, -1));
+        jPanel1.add(jTextField6, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 310, 110, 30));
+
+        jLabel7.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        jLabel7.setText("OR");
+        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 370, -1, -1));
+
+        jdcFromDate.setDateFormatString("yyyy-MM-dd");
+        jPanel1.add(jdcFromDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 370, 150, -1));
+
+        jdcToDate.setDateFormatString("yyyy-MM-dd");
+        jPanel1.add(jdcToDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 370, 140, -1));
+
+        jdcExpenseDate.setDateFormatString("yyyy-MM-dd");
+        jPanel1.add(jdcExpenseDate, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 40, 150, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 930, 450));
 
@@ -397,19 +418,16 @@ private void clearExpenseFields() {
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         // TODO add your handling code here:
          try {
-        // Validate and parse date
-        if (txtDate.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a date in YYYY-MM-DD format.");
-            return;
+        // Get date from DateChooser
+        if (jdcExpenseDate.getDate() == null) {
+              JOptionPane.showMessageDialog(this, "Please select expense date!");
+          return;
         }
 
-        java.sql.Date expenseDate;
-        try {
-            expenseDate = java.sql.Date.valueOf(txtDate.getText().trim());  // e.g. "2025-08-22"
-        } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid date format! Use YYYY-MM-DD.");
-            return;
-        }
+        java.sql.Date expenseDate =
+        new java.sql.Date(jdcExpenseDate.getDate().getTime());
+
+        
 
         String category = cmbCategory.getSelectedItem().toString();
         String description = txtDescription.getText().trim();
@@ -433,8 +451,8 @@ private void clearExpenseFields() {
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
         searchExpenses();
-        jTextField4.setText("");
-        jTextField2.setText("");
+        jdcFromDate.setDate(null);
+        jdcToDate.setDate(null);
         jComboBox3.setSelectedIndex(0);
     }//GEN-LAST:event_jButton4ActionPerformed
 
@@ -442,8 +460,8 @@ private void clearExpenseFields() {
         // TODO add your handling code here:
         loadExpenseTable();
         clearExpenseFields();
-        jTextField4.setText("");
-        jTextField2.setText("");
+        jdcFromDate.setDate(null);
+        jdcToDate.setDate(null);
         jComboBox3.setSelectedIndex(0);
     }//GEN-LAST:event_jButton9ActionPerformed
 
@@ -561,6 +579,7 @@ private void clearExpenseFields() {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JRadioButton jRadioButton1;
@@ -569,10 +588,11 @@ private void clearExpenseFields() {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField4;
+    private javax.swing.JTextField jTextField6;
+    private com.toedter.calendar.JDateChooser jdcExpenseDate;
+    private com.toedter.calendar.JDateChooser jdcFromDate;
+    private com.toedter.calendar.JDateChooser jdcToDate;
     private javax.swing.JTextField txtAmount;
-    private javax.swing.JTextField txtDate;
     private javax.swing.JTextArea txtDescription;
     // End of variables declaration//GEN-END:variables
 }
