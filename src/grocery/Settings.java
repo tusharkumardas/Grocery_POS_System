@@ -53,6 +53,7 @@ private void loadCompanyInfo() {
             jTextField7.setText(rs.getString("company_name"));
             jTextField2.setText(rs.getString("gst_no"));
             jTextField3.setText(rs.getString("contact_no"));
+            jTextArea1.setText(rs.getString("address"));
         }
     } catch (Exception e) {
         e.printStackTrace();
@@ -62,13 +63,14 @@ private void saveCompanyInfo() {
     try (Connection con = ConnectionProvider.getCon()) {
         String sql = """
             UPDATE company_settings
-            SET company_name=?, gst_no=?, contact_no=?
+            SET company_name=?, gst_no=?, contact_no=?, address=?
             WHERE id=1
         """;
         PreparedStatement pst = con.prepareStatement(sql);
         pst.setString(1, jTextField7.getText().trim());
         pst.setString(2, jTextField2.getText().trim());
         pst.setString(3, jTextField3.getText().trim());
+        pst.setString(4, jTextArea1.getText().trim());
         pst.executeUpdate();
 
         JOptionPane.showMessageDialog(this, "Company info saved");
@@ -85,6 +87,18 @@ private void saveCompanyInfo() {
     }
 
     String username = jTable1.getValueAt(row, 0).toString();
+    String role = jTable1.getValueAt(row, 1).toString(); // 👈 role column
+
+    // 🔒 BLOCK ADMIN DELETION
+    if ("admin".equalsIgnoreCase(role)) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Admin user cannot be deleted",
+            "Action Not Allowed",
+            JOptionPane.WARNING_MESSAGE
+        );
+        return;
+    }
 
     int confirm = JOptionPane.showConfirmDialog(
         this,
@@ -97,7 +111,7 @@ private void saveCompanyInfo() {
 
     try (Connection con = ConnectionProvider.getCon()) {
         PreparedStatement ps = con.prepareStatement(
-            "DELETE FROM users WHERE username = ?"
+            "DELETE FROM users WHERE username = ? AND role<> 'admin' "
         );
         ps.setString(1, username);
         ps.executeUpdate();
@@ -204,6 +218,7 @@ private void saveCompanyInfo() {
      */
     public Settings() {
         initComponents();
+        jTable1.setDefaultEditor(Object.class, null);
         if (!"admin".equalsIgnoreCase(Session.role)) {
         JOptionPane.showMessageDialog(this, "Admin access only");
         dispose();
@@ -235,11 +250,11 @@ private void saveCompanyInfo() {
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
         jTextField2 = new javax.swing.JTextField();
         jTextField3 = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
@@ -253,6 +268,9 @@ private void saveCompanyInfo() {
         jTextField7 = new javax.swing.JTextField();
         jButton5 = new javax.swing.JButton();
         txtPassword = new javax.swing.JPasswordField();
+        jLabel1 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -265,12 +283,6 @@ private void saveCompanyInfo() {
 
         jLabel4.setText("Contact No.:");
         jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(121, 117, -1, -1));
-        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 77, 152, -1));
-        jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 117, 152, -1));
-
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel5.setText("User Management");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
 
         jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -286,6 +298,12 @@ private void saveCompanyInfo() {
         jScrollPane1.setViewportView(jTable1);
 
         jPanel1.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, 490, 270));
+        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 77, 152, -1));
+        jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(227, 117, 152, -1));
+
+        jLabel5.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel5.setText("User Management");
+        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
 
         jButton1.setBackground(new java.awt.Color(204, 255, 255));
         jButton1.setText("UPDATE USER OR RESET PASSWORD");
@@ -339,8 +357,17 @@ private void saveCompanyInfo() {
                 jButton5ActionPerformed(evt);
             }
         });
-        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 110, 140, 30));
+        jPanel1.add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 100, 140, 30));
         jPanel1.add(txtPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 250, 150, -1));
+
+        jLabel1.setText("Address:");
+        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 40, -1, -1));
+
+        jTextArea1.setColumns(20);
+        jTextArea1.setRows(5);
+        jScrollPane2.setViewportView(jTextArea1);
+
+        jPanel1.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 60, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 840, 470));
 
@@ -446,6 +473,7 @@ private void saveCompanyInfo() {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -455,7 +483,9 @@ private void saveCompanyInfo() {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
+    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField7;
