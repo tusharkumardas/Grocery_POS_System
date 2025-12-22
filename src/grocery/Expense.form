@@ -359,10 +359,10 @@
                         <Column editable="false" title="EXPENSE CODE" type="java.lang.Object"/>
                         <Column editable="false" title="EXPENSE DATE" type="java.lang.Object"/>
                         <Column editable="false" title="CATEGORY" type="java.lang.Object"/>
-                        <Column editable="true" title="DESCRIPTION" type="java.lang.Object"/>
-                        <Column editable="true" title="AMOUNT" type="java.lang.Object"/>
-                        <Column editable="true" title="PAYMENT MODE" type="java.lang.Object"/>
-                        <Column editable="true" title="CREATED AT" type="java.lang.Object"/>
+                        <Column editable="false" title="DESCRIPTION" type="java.lang.Object"/>
+                        <Column editable="false" title="AMOUNT" type="java.lang.Object"/>
+                        <Column editable="false" title="PAYMENT MODE" type="java.lang.Object"/>
+                        <Column editable="false" title="CREATED AT" type="java.lang.Object"/>
                       </Table>
                     </Property>
                   </Properties>
