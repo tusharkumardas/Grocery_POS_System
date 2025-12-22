@@ -18,6 +18,7 @@ import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import java.awt.Color;
+import grocery.UpdateForm;
 
 
 /**
@@ -93,7 +94,6 @@ public class ProductEntry extends javax.swing.JFrame {
             String selectedValue = suggestionList.getSelectedValue();
             if (selectedValue != null) {
                 String itemCode = selectedValue.split("\\|")[0].trim(); // extract name
-                fillProductFields(itemCode);
                 scrollPane.setVisible(false); // hide after selection
             }
         }
@@ -129,13 +129,146 @@ public class ProductEntry extends javax.swing.JFrame {
         e.printStackTrace();
     }
 }
+    
+    private void lockFields(boolean locked) {
+    jTextField1.setEnabled(!locked);
+    jTextField2.setEnabled(!locked);
+    jTextField3.setEnabled(!locked);
+    jTextField4.setEnabled(!locked);
+    jTextField5.setEnabled(!locked);
+    jTextField6.setEnabled(!locked);
+    jTextField7.setEnabled(!locked);
+    jTextField8.setEnabled(!locked);
+    jTextField10.setEnabled(!locked);
+    jTextField11.setEnabled(!locked);
+}
+    private void handleBarcode() {
+    String barcode = jTextField8.getText().trim();
+
+    if (barcode.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please enter barcode");
+        return;
+    }
+
+    try (Connection con = ConnectionProvider.getCon()) {
+
+        String sql = "SELECT * FROM products WHERE barcode = ?";
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, barcode);
+
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            // 🔁 BARCODE EXISTS → OPEN UPDATE MODULE
+            JOptionPane.showMessageDialog(
+                this,
+                "Product already exists. Opening update module."
+            );
+
+            UpdateForm up = new UpdateForm(barcode);
+            up.setVisible(true);
+            this.dispose(); // close add screen
+
+        } else {
+            // ➕ NEW BARCODE → ENABLE ADD MODE
+            JOptionPane.showMessageDialog(
+                this,
+                "New product detected. Please enter details."
+            );
+
+            lockFields(false);        // 🔓 enable fields
+            jTextField9.requestFocus(); // move to item code
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, e.getMessage());
+    }
+}
+
+
+    private boolean productExists(String barcode, String itemCode) {
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT id FROM products WHERE barcode = ? OR item_code = ?";
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, barcode);
+        pst.setString(2, itemCode);
+
+        ResultSet rs = pst.executeQuery();
+        return rs.next(); // true if found
+    } catch (Exception e) {
+        e.printStackTrace();
+        return true; // fail-safe
+    }
+}
+
+    private void promptForProduct() {
+    String input = JOptionPane.showInputDialog(
+        this,
+        "Enter Barcode OR Item Code",
+        "Product Lookup",
+        JOptionPane.QUESTION_MESSAGE
+    );
+
+    if (input == null || input.trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Barcode or Item Code is required!");
+        this.dispose();
+        return;
+    }
+
+    try (Connection con = ConnectionProvider.getCon()) {
+        String sql = "SELECT * FROM products WHERE barcode = ? OR item_code = ?";
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setString(1, input.trim());
+        pst.setString(2, input.trim());
+
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            JOptionPane.showMessageDialog(this, "Product already exists. Opening Update Form.");
+
+            UpdateForm up = new UpdateForm(rs.getString("barcode"));
+            up.setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "New product. Please enter details.");
+            lockFields(false);
+            jTextField9.requestFocus();
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+    private void clearFields() {
+    jTextField1.setText("");
+    jTextField2.setText("");
+    jTextField3.setText("");
+    jTextField4.setText("");
+    jTextField5.setText("");
+    jTextField6.setText("");
+    jTextField7.setText("");
+    jTextField8.setText("");
+    jTextField9.setText("");
+    jTextField10.setText("");
+    jTextField11.setText("");
+
+    lockFields(true);          // 🔒 lock again
+    jTextField8.setEnabled(true);
+    jTextField8.requestFocus(); // focus back to barcode
+}
+
 
     /**
      * Creates new form ProductEntry
      */
     public ProductEntry() {
         initComponents();
+        java.awt.EventQueue.invokeLater(() -> promptForProduct());
         setupSearchSuggestions();
+        lockFields(true);              // 🔒 lock everything
+        jTextField8.setEnabled(true);
+        jTextField8.addActionListener(e -> handleBarcode());
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
     
@@ -176,6 +309,7 @@ public class ProductEntry extends javax.swing.JFrame {
         jTextField11 = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -274,7 +408,7 @@ public class ProductEntry extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
-        jPanel2.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 260, 180, 40));
+        jPanel2.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 330, 180, 40));
 
         jButton2.setBackground(new java.awt.Color(255, 204, 204));
         jButton2.setText("ADD TO STOCK");
@@ -285,6 +419,16 @@ public class ProductEntry extends javax.swing.JFrame {
             }
         });
         jPanel2.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 190, 180, 40));
+
+        jButton3.setBackground(new java.awt.Color(204, 255, 204));
+        jButton3.setText("RESET");
+        jButton3.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+        jPanel2.add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(710, 260, 180, 40));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -320,6 +464,18 @@ public class ProductEntry extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
+         String barcode = jTextField8.getText().trim();
+    String itemCode = jTextField9.getText().trim();
+
+    if (productExists(barcode, itemCode)) {
+        JOptionPane.showMessageDialog(
+            this,
+            "Product already exists!\nPlease use Update Module.",
+            "Duplicate Entry",
+            JOptionPane.WARNING_MESSAGE
+        );
+        return; // ⛔ STOP EXECUTION HERE
+    }
         
 
     try {
@@ -346,6 +502,7 @@ public class ProductEntry extends javax.swing.JFrame {
         e.printStackTrace();
         JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
     }
+    clearFields();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -353,6 +510,11 @@ public class ProductEntry extends javax.swing.JFrame {
         StockManagement st=new StockManagement();
         st.setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        clearFields();
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -392,6 +554,7 @@ public class ProductEntry extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
