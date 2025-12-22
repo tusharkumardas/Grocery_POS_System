@@ -19,6 +19,47 @@ import java.io.File;
  * @author Tushar Kumar Das
  */
 public class saveBill {
+    private static void updateProductStock(Connection con, JTable billTable) throws Exception {
+
+    String checkStockSql  = "SELECT qty FROM products WHERE id = ?";
+    String updateStockSql = "UPDATE products SET qty = qty - ? WHERE id = ?";
+
+    try (
+        PreparedStatement psCheck  = con.prepareStatement(checkStockSql);
+        PreparedStatement psUpdate = con.prepareStatement(updateStockSql)
+    ) {
+
+        for (int i = 0; i < billTable.getRowCount(); i++) {
+
+            int productId = Integer.parseInt(billTable.getValueAt(i, 0).toString());
+            int soldQty  = Integer.parseInt(billTable.getValueAt(i, 3).toString());
+
+            // 1. Check available stock
+            psCheck.setInt(1, productId);
+            ResultSet rs = psCheck.executeQuery();
+
+            if (!rs.next()) {
+                throw new Exception("Product not found (ID: " + productId + ")");
+            }
+
+            int availableQty = rs.getInt("qty");
+
+            if (availableQty < soldQty) {
+                throw new Exception(
+                    "Insufficient stock for product ID: " + productId +
+                    " | Available: " + availableQty +
+                    " | Required: " + soldQty
+                );
+            }
+
+            // 2. Deduct stock
+            psUpdate.setInt(1, soldQty);
+            psUpdate.setInt(2, productId);
+            psUpdate.executeUpdate();
+        }
+    }
+}
+
       public static void saveBill(JTable jTableBillItems,
                                 JTextField jTextFieldCustomerName,
                                 JTextField jTextFieldCustomerPhone,
@@ -143,6 +184,7 @@ public class saveBill {
             }
 
             psItems.executeBatch();
+            updateProductStock(con, jTableBillItems);
             con.commit();
 
             JOptionPane.showMessageDialog(null, "Bill saved successfully with Invoice No: " + invoiceNo);
