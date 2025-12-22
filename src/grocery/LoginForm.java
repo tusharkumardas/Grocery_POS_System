@@ -17,6 +17,7 @@ public class LoginForm extends javax.swing.JFrame {
      */
     public LoginForm() {
         initComponents();
+        getRootPane().setDefaultButton(jButton1); 
     }
 
     /**
@@ -53,7 +54,7 @@ public class LoginForm extends javax.swing.JFrame {
         jLabel2.setText("TUSHAR VARIETY STORE");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 30, -1, -1));
 
-        cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select Role", "Admin", "Manager", "Cashier", "Staff" }));
+        cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select Role", "admin", "manager", "cashier", "staff" }));
         jPanel1.add(cmbRole, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 80, 190, -1));
 
         txtUsername.addActionListener(new java.awt.event.ActionListener() {
@@ -136,8 +137,8 @@ public class LoginForm extends javax.swing.JFrame {
     if (success) {
         //JOptionPane.showMessageDialog(this, "Login successful");
 
-         Session.username = username;
-         Session.role = role;
+         //Session.username = username;
+         //Session.role = role.toLowerCase();
 
     // Launch main dashboard
     NewJFrame dashboard = new NewJFrame();
