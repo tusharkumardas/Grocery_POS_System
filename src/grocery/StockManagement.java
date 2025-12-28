@@ -87,6 +87,7 @@ public class StockManagement extends javax.swing.JFrame {
                   rs.getDate("exp_date"),
                   rs.getString("brand_name"),
                   rs.getString("barcode"),
+                  rs.getDouble("gst"),   
                   rs.getInt("stock_alert")
               };
               model.addRow(row);
@@ -330,12 +331,20 @@ public class StockManagement extends javax.swing.JFrame {
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Item code", "Product Name", "QTY", "Purchase price", "Sale Price", "MRP", "EXP Date", "BRAND", "BARCODE", "Stock Alert"
+                "Item code", "Product Name", "QTY", "Purchase price", "Sale Price", "MRP", "EXP Date", "BRAND", "BARCODE", "GST", "Stock Alert"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         jScrollPane1.setViewportView(jTable1);
 
         jScrollPane2.setViewportView(jScrollPane1);
@@ -395,16 +404,16 @@ private String padRight(String text, int length) {
         String expDate = jTable1.getValueAt(selectedRow, 6).toString();
         String brand = jTable1.getValueAt(selectedRow, 7).toString();
         String barcode = jTable1.getValueAt(selectedRow, 8).toString();
-        String stockAlert = jTable1.getValueAt(selectedRow, 9).toString();
+        String gst = jTable1.getValueAt(selectedRow, 9).toString();
+        String stockAlert = jTable1.getValueAt(selectedRow, 10).toString();
 
         UpdateForm updateForm = new UpdateForm(); // use default constructor
-        updateForm.setProductDetails(itemCode, productName, qty, purchasePrice, salePrice, mrp, expDate, brand, barcode, stockAlert);
+        updateForm.setProductDetails(itemCode, productName, qty, purchasePrice, salePrice, mrp, expDate, brand, barcode, gst, stockAlert);
         updateForm.setVisible(true);
  
     } else {
         JOptionPane.showMessageDialog(null, "Please select a row to update.");
     }
-
     }//GEN-LAST:event_jButton6ActionPerformed
 
     /**

@@ -183,17 +183,18 @@
                 <Component class="javax.swing.JTable" name="jTable1">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                      <Table columnCount="10" rowCount="1">
-                        <Column editable="true" title="Item code" type="java.lang.Object"/>
-                        <Column editable="true" title="Product Name" type="java.lang.Object"/>
-                        <Column editable="true" title="QTY" type="java.lang.Object"/>
-                        <Column editable="true" title="Purchase price" type="java.lang.Object"/>
-                        <Column editable="true" title="Sale Price" type="java.lang.Object"/>
-                        <Column editable="true" title="MRP" type="java.lang.Object"/>
-                        <Column editable="true" title="EXP Date" type="java.lang.Object"/>
-                        <Column editable="true" title="BRAND" type="java.lang.Object"/>
-                        <Column editable="true" title="BARCODE" type="java.lang.Object"/>
-                        <Column editable="true" title="Stock Alert" type="java.lang.Object"/>
+                      <Table columnCount="11" rowCount="1">
+                        <Column editable="false" title="Item code" type="java.lang.Object"/>
+                        <Column editable="false" title="Product Name" type="java.lang.Object"/>
+                        <Column editable="false" title="QTY" type="java.lang.Object"/>
+                        <Column editable="false" title="Purchase price" type="java.lang.Object"/>
+                        <Column editable="false" title="Sale Price" type="java.lang.Object"/>
+                        <Column editable="false" title="MRP" type="java.lang.Object"/>
+                        <Column editable="false" title="EXP Date" type="java.lang.Object"/>
+                        <Column editable="false" title="BRAND" type="java.lang.Object"/>
+                        <Column editable="false" title="BARCODE" type="java.lang.Object"/>
+                        <Column editable="false" title="GST" type="java.lang.Object"/>
+                        <Column editable="false" title="Stock Alert" type="java.lang.Object"/>
                       </Table>
                     </Property>
                   </Properties>
