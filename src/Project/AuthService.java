@@ -13,8 +13,7 @@ import org.mindrot.jbcrypt.BCrypt;
  * @author Tushar Kumar Das
  */
 public class AuthService {
-
-    public static boolean login(String username, String role, String pin) throws Exception {
+   public static boolean login(String username, String role, String pin) throws Exception {
 
         Connection con = ConnectionProvider.getCon();
 
