@@ -18,6 +18,7 @@ public class LoginForm extends javax.swing.JFrame {
     public LoginForm() {
         initComponents();
         getRootPane().setDefaultButton(jButton1); 
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
     }
 
     /**
@@ -31,7 +32,6 @@ public class LoginForm extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         cmbRole = new javax.swing.JComboBox<>();
         txtUsername = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
@@ -49,10 +49,6 @@ public class LoginForm extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel1.setText("VYAPAR SETU");
         jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 10, 100, -1));
-
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel2.setText("TUSHAR VARIETY STORE");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 30, -1, -1));
 
         cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select Role", "admin", "manager", "cashier", "staff" }));
         jPanel1.add(cmbRole, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 80, 190, -1));
@@ -136,7 +132,6 @@ public class LoginForm extends javax.swing.JFrame {
 
     if (success) {
         //JOptionPane.showMessageDialog(this, "Login successful");
-
          //Session.username = username;
          //Session.role = role.toLowerCase();
 
@@ -195,7 +190,6 @@ public class LoginForm extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> cmbRole;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
