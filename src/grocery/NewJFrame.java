@@ -5,6 +5,7 @@
 package grocery;
 import grocery.ProductEntry;
 import javax.swing.JOptionPane;
+import Project.Session;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.event.MouseAdapter;
@@ -439,6 +440,109 @@ public class NewJFrame extends javax.swing.JFrame {
     // 🔙 Focus back to search bar
     jTextFieldSearch.requestFocusInWindow();
 }
+    private void applyRolePermissions() {
+
+    String role = Session.role.toLowerCase(); // ✅ normalize
+
+    // DENY ALL FIRST
+    btnSales.setEnabled(false);
+    btnPurchase.setEnabled(false);
+    btnExpense.setEnabled(false);
+    btnCustomer.setEnabled(false);
+    btnReports.setEnabled(false);
+    btnStaff.setEnabled(false);
+    btnSettings.setEnabled(false);
+    btnInventory.setEnabled(false);
+    jButton6.setEnabled(false);
+
+    switch (role) {
+
+        case "admin":
+            btnSales.setEnabled(true);
+            btnPurchase.setEnabled(true);
+            btnExpense.setEnabled(true);
+            btnCustomer.setEnabled(true);
+            btnReports.setEnabled(true);
+            btnStaff.setEnabled(true);
+            btnSettings.setEnabled(true);
+            btnInventory.setEnabled(true);
+            jButton6.setEnabled(true);
+            break;
+
+        case "manager":
+            btnSales.setEnabled(true);
+            btnPurchase.setEnabled(true);
+            btnExpense.setEnabled(true);
+            btnCustomer.setEnabled(true);
+            btnInventory.setEnabled(true);
+            jButton6.setEnabled(true);
+            break;
+
+        case "cashier":
+            btnSales.setEnabled(true);
+            break;
+
+        case "staff":
+            // view-only
+            break;
+
+        default:
+            JOptionPane.showMessageDialog(this, "Invalid role detected");
+            System.exit(0);
+    }
+}
+
+private void loadCompanyName() {
+    try (Connection con = ConnectionProvider.getCon()) {
+        PreparedStatement pst = con.prepareStatement(
+            "SELECT company_name FROM company_settings WHERE id=1"
+        );
+        ResultSet rs = pst.executeQuery();
+        if (rs.next()) {
+            lblCompanyName.setText(rs.getString(1));
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+private void loadLowStockProducts() {
+
+    DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+    model.setRowCount(0); // Clear previous data
+
+    String sql = "SELECT item_code, product_name " +
+                 "FROM products " +
+                 "WHERE qty <= stock_alert " +
+                 "ORDER BY qty ASC";
+
+    try (Connection con = ConnectionProvider.getCon();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getString("item_code"),
+                rs.getString("product_name")
+            });
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+   private void adjustStockAlertTableColumns() {
+    // Item Code column (make it narrow)
+    jTable2.getColumnModel().getColumn(0).setPreferredWidth(110);
+    jTable2.getColumnModel().getColumn(0).setMinWidth(90);
+    jTable2.getColumnModel().getColumn(0).setMaxWidth(150);
+
+    // Product Name column (give more space)
+    jTable2.getColumnModel().getColumn(1).setPreferredWidth(260);
+}
+
+
 
     
     
@@ -446,8 +550,23 @@ public class NewJFrame extends javax.swing.JFrame {
      * Creates new form NewJFrame
      */
     public NewJFrame() {
+        if (Session.role == null || Session.username == null) {
+        JOptionPane.showMessageDialog(
+            null,
+            "Session expired. Please login again."
+        );
+        new LoginForm().setVisible(true);
+        dispose();
+        return;
+    }
         initComponents();
         startDateTime();
+        applyRolePermissions();
+        lblUsername.setText(Session.username);
+        lblRole.setText(Session.role.toUpperCase());
+        loadCompanyName();
+        adjustStockAlertTableColumns();
+
         // Hide Product ID column
         jTable1.getColumnModel().getColumn(0).setMinWidth(0);
         jTable1.getColumnModel().getColumn(0).setMaxWidth(0);
@@ -459,6 +578,7 @@ public class NewJFrame extends javax.swing.JFrame {
         addBarcodeListener();
         setupTableEnterKey();
         loadLastInvoiceNo();
+        loadLowStockProducts();
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.addTableModelListener(e -> updateBillingSummary());
         txtAmountPaid.getDocument().addDocumentListener(new DocumentListener() {
@@ -472,7 +592,7 @@ public class NewJFrame extends javax.swing.JFrame {
         public void changedUpdate(DocumentEvent e) { updateBillingSummary(); }
 });
 
-
+this.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
     }
 
     /**
@@ -485,9 +605,12 @@ public class NewJFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
+        lblCompanyName = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        lblUsername = new javax.swing.JLabel();
+        lblRole = new javax.swing.JLabel();
+        jButton15 = new javax.swing.JButton();
+        jLabel27 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -544,23 +667,24 @@ public class NewJFrame extends javax.swing.JFrame {
         jLabel25 = new javax.swing.JLabel();
         jLabel26 = new javax.swing.JLabel();
         jPanel7 = new javax.swing.JPanel();
-        jButton7 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
-        jButton9 = new javax.swing.JButton();
-        jButton10 = new javax.swing.JButton();
-        jButton11 = new javax.swing.JButton();
-        jButton12 = new javax.swing.JButton();
-        jButton13 = new javax.swing.JButton();
-        jButton14 = new javax.swing.JButton();
-        jButton16 = new javax.swing.JButton();
+        btnSales = new javax.swing.JButton();
+        btnPurchase = new javax.swing.JButton();
+        btnInventory = new javax.swing.JButton();
+        btnExpense = new javax.swing.JButton();
+        btnCustomer = new javax.swing.JButton();
+        btnReports = new javax.swing.JButton();
+        btnStaff = new javax.swing.JButton();
+        btnSettings = new javax.swing.JButton();
+        btnHome = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable2 = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
-        jMenu2 = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -569,21 +693,34 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED)));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabel1.setFont(new java.awt.Font("Algerian", 1, 48)); // NOI18N
-        jLabel1.setText("TUSHAR VARIETY STORE");
-        jPanel1.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 0, -1, -1));
+        lblCompanyName.setFont(new java.awt.Font("Algerian", 1, 48)); // NOI18N
+        lblCompanyName.setText("lblCOMPANYNAME");
+        jPanel1.add(lblCompanyName, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 0, -1, -1));
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel2.setText("13/07/2025 10:10 AM");
-        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(1170, 20, -1, -1));
+        jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(810, 20, -1, -1));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Profile", "Logout" }));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        lblUsername.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        lblUsername.setText("lblUsername");
+        jPanel1.add(lblUsername, new org.netbeans.lib.awtextra.AbsoluteConstraints(1040, 20, 110, -1));
+
+        lblRole.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        lblRole.setText("lblRole");
+        jPanel1.add(lblRole, new org.netbeans.lib.awtextra.AbsoluteConstraints(1180, 20, 130, -1));
+
+        jButton15.setBackground(new java.awt.Color(255, 153, 153));
+        jButton15.setText("LOGOUT");
+        jButton15.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                jButton15ActionPerformed(evt);
             }
         });
-        jPanel1.add(jComboBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(1420, 20, -1, -1));
+        jPanel1.add(jButton15, new org.netbeans.lib.awtextra.AbsoluteConstraints(1400, 10, 90, 40));
+
+        jLabel27.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel27.setText("VYAPAR SETU");
+        jPanel1.add(jLabel27, new org.netbeans.lib.awtextra.AbsoluteConstraints(650, 20, -1, -1));
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1520, 60));
 
@@ -823,72 +960,77 @@ public class NewJFrame extends javax.swing.JFrame {
         jPanel7.setBackground(new java.awt.Color(167, 236, 236));
         jPanel7.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jButton7.setText("SALE");
-        jButton7.addActionListener(new java.awt.event.ActionListener() {
+        btnSales.setText("SALE");
+        btnSales.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton7ActionPerformed(evt);
+                btnSalesActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 180, -1));
+        jPanel7.add(btnSales, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 180, -1));
 
-        jButton8.setText("PURCHASE");
-        jButton8.addActionListener(new java.awt.event.ActionListener() {
+        btnPurchase.setText("PURCHASE");
+        btnPurchase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton8ActionPerformed(evt);
+                btnPurchaseActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton8, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 180, -1));
+        jPanel7.add(btnPurchase, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 130, 180, -1));
 
-        jButton9.setText("INVENTORY");
-        jButton9.addActionListener(new java.awt.event.ActionListener() {
+        btnInventory.setText("INVENTORY");
+        btnInventory.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton9ActionPerformed(evt);
+                btnInventoryActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton9, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, 180, -1));
+        jPanel7.add(btnInventory, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 180, 180, -1));
 
-        jButton10.setText("EXPENSE");
-        jButton10.addActionListener(new java.awt.event.ActionListener() {
+        btnExpense.setText("EXPENSE");
+        btnExpense.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton10ActionPerformed(evt);
+                btnExpenseActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton10, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, 180, -1));
+        jPanel7.add(btnExpense, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 230, 180, -1));
 
-        jButton11.setText("CUSTOMER");
-        jButton11.addActionListener(new java.awt.event.ActionListener() {
+        btnCustomer.setText("CUSTOMER");
+        btnCustomer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton11ActionPerformed(evt);
+                btnCustomerActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton11, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 280, 180, -1));
+        jPanel7.add(btnCustomer, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 280, 180, -1));
 
-        jButton12.setText("REPORTS");
-        jButton12.addActionListener(new java.awt.event.ActionListener() {
+        btnReports.setText("REPORTS");
+        btnReports.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton12ActionPerformed(evt);
+                btnReportsActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton12, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 340, 180, -1));
+        jPanel7.add(btnReports, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 340, 180, -1));
 
-        jButton13.setText("STAFF");
-        jButton13.addActionListener(new java.awt.event.ActionListener() {
+        btnStaff.setText("STAFF");
+        btnStaff.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton13ActionPerformed(evt);
+                btnStaffActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton13, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 400, 180, -1));
+        jPanel7.add(btnStaff, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 400, 180, -1));
 
-        jButton14.setText("SETTINGS");
-        jButton14.addActionListener(new java.awt.event.ActionListener() {
+        btnSettings.setText("SETTINGS");
+        btnSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton14ActionPerformed(evt);
+                btnSettingsActionPerformed(evt);
             }
         });
-        jPanel7.add(jButton14, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 460, 180, -1));
+        jPanel7.add(btnSettings, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 460, 180, -1));
 
-        jButton16.setText("HOME");
-        jPanel7.add(jButton16, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 180, -1));
+        btnHome.setText("HOME");
+        btnHome.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHomeActionPerformed(evt);
+            }
+        });
+        jPanel7.add(btnHome, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 180, -1));
 
         getContentPane().add(jPanel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 200, 690));
 
@@ -920,28 +1062,41 @@ public class NewJFrame extends javax.swing.JFrame {
         });
         getContentPane().add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 550, -1, -1));
 
-        jButton5.setBackground(new java.awt.Color(204, 204, 255));
-        jButton5.setText("SEARCH PRODUCT");
-        getContentPane().add(jButton5, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 550, -1, -1));
-
         jButton6.setBackground(new java.awt.Color(204, 255, 204));
         jButton6.setText("STOCK");
-        getContentPane().add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 550, 130, -1));
+        getContentPane().add(jButton6, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 550, 130, -1));
 
-        jMenu1.setText("File");
-        jMenuBar1.add(jMenu1);
+        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-        jMenu2.setText("Edit");
-        jMenuBar1.add(jMenu2);
+            },
+            new String [] {
+                "ITEM CODE", "PRODUCT NAME"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
 
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane1.setViewportView(jTable2);
+
+        jScrollPane3.setViewportView(jScrollPane1);
+
+        getContentPane().add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(1190, 590, 320, 160));
+
+        jLabel1.setBackground(new java.awt.Color(255, 255, 255));
+        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 51, 51));
+        jLabel1.setText("STOCK ALERT PANEL");
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(1290, 570, -1, -1));
         setJMenuBar(jMenuBar1);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void invoiceTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_invoiceTextFieldActionPerformed
         // TODO add your handling code here:
@@ -978,12 +1133,25 @@ public class NewJFrame extends javax.swing.JFrame {
         );
         loadLastInvoiceNo();
         // Generate bill text and show preview only if save was successful
-        String billText = BillGenerator.generateBill(jTable1);
+        double subTotal = Double.parseDouble(txtSubTotal.getText().trim());
+double gst = Double.parseDouble(txtTax.getText().trim());
+double discount = Double.parseDouble(txtDiscount.getText().trim());
+double finalTotal = Double.parseDouble(txtFinalTotal.getText().trim());
+
+String billText = BillGenerator.generateBill(
+    jTable1,
+    subTotal,
+    gst,
+    discount,
+    finalTotal
+);
+
         Bill_Dialogbox preview = new Bill_Dialogbox();
         preview.setBillText(billText);
         preview.setVisible(true);
         // After preview.setVisible(true);
         resetBillingScreen();
+        loadLowStockProducts();
 
 
     } catch (Exception e) {
@@ -993,53 +1161,57 @@ public class NewJFrame extends javax.swing.JFrame {
         
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+    private void btnPurchaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPurchaseActionPerformed
         // TODO add your handling code here:
         Purchase pr= new Purchase();
         pr.setVisible(true);
-    }//GEN-LAST:event_jButton8ActionPerformed
+    }//GEN-LAST:event_btnPurchaseActionPerformed
 
-    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+    private void btnSalesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSalesActionPerformed
         // TODO add your handling code here:
         Sale sl=new Sale();
         sl.setVisible(true);
-    }//GEN-LAST:event_jButton7ActionPerformed
+    }//GEN-LAST:event_btnSalesActionPerformed
 
-    private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
+    private void btnSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSettingsActionPerformed
         // TODO add your handling code here:
         Settings stg=new Settings();
         stg.setVisible(true);
-    }//GEN-LAST:event_jButton14ActionPerformed
+    }//GEN-LAST:event_btnSettingsActionPerformed
 
-    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+    private void btnInventoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInventoryActionPerformed
         // TODO add your handling code here:
         StockManagement stc=new StockManagement();
         stc.setVisible(true);
-    }//GEN-LAST:event_jButton9ActionPerformed
+    }//GEN-LAST:event_btnInventoryActionPerformed
 
-    private void jButton11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton11ActionPerformed
+    private void btnCustomerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCustomerActionPerformed
         // TODO add your handling code here:
         Customer cr=new Customer();
         cr.setVisible(true);
-    }//GEN-LAST:event_jButton11ActionPerformed
+    }//GEN-LAST:event_btnCustomerActionPerformed
 
-    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+    private void btnStaffActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStaffActionPerformed
         // TODO add your handling code here:
         Staff stf=new Staff();
         stf.setVisible(true);
-    }//GEN-LAST:event_jButton13ActionPerformed
+    }//GEN-LAST:event_btnStaffActionPerformed
 
-    private void jButton12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton12ActionPerformed
+    private void btnReportsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReportsActionPerformed
         // TODO add your handling code here:
-        Report rpt=new Report();
-        rpt.setVisible(true);
-    }//GEN-LAST:event_jButton12ActionPerformed
+        JOptionPane.showMessageDialog(
+        this,
+        "📊 Reports module is under development.\nThis feature will be available soon.",
+        "Coming Soon",
+        JOptionPane.INFORMATION_MESSAGE
+    );
+    }//GEN-LAST:event_btnReportsActionPerformed
 
-    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+    private void btnExpenseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExpenseActionPerformed
         // TODO add your handling code here:
         Expense exp=new Expense();
         exp.setVisible(true);
-    }//GEN-LAST:event_jButton10ActionPerformed
+    }//GEN-LAST:event_btnExpenseActionPerformed
 
     private void txtAmountDueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtAmountDueActionPerformed
         // TODO add your handling code here:
@@ -1061,6 +1233,19 @@ public class NewJFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
         deleteSelectedItem();
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton15ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton15ActionPerformed
+        // TODO add your handling code here:
+        Session.username = null;
+        Session.role = null;
+        new LoginForm().setVisible(true);
+        this.dispose();
+
+    }//GEN-LAST:event_jButton15ActionPerformed
+
+    private void btnHomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHomeActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnHomeActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1098,24 +1283,23 @@ public class NewJFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnCustomer;
+    private javax.swing.JButton btnExpense;
+    private javax.swing.JButton btnHome;
+    private javax.swing.JButton btnInventory;
+    private javax.swing.JButton btnPurchase;
+    private javax.swing.JButton btnReports;
+    private javax.swing.JButton btnSales;
+    private javax.swing.JButton btnSettings;
+    private javax.swing.JButton btnStaff;
     private javax.swing.JComboBox<String> cmbPaymentMode;
     private javax.swing.JTextField invoiceTextField;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton10;
-    private javax.swing.JButton jButton11;
-    private javax.swing.JButton jButton12;
-    private javax.swing.JButton jButton13;
-    private javax.swing.JButton jButton14;
-    private javax.swing.JButton jButton16;
+    private javax.swing.JButton jButton15;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
-    private javax.swing.JButton jButton9;
-    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1135,6 +1319,7 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1142,8 +1327,6 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -1152,8 +1335,11 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTable jTable1;
+    private javax.swing.JTable jTable2;
     private javax.swing.JTextField jTextField10;
     private javax.swing.JTextField jTextField11;
     private javax.swing.JTextField jTextField12;
@@ -1169,6 +1355,9 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextFieldCustomerName;
     private javax.swing.JTextField jTextFieldCustomerPhone;
     private javax.swing.JTextField jTextFieldSearch;
+    private javax.swing.JLabel lblCompanyName;
+    private javax.swing.JLabel lblRole;
+    private javax.swing.JLabel lblUsername;
     private javax.swing.JTextField txtAmountDue;
     private javax.swing.JTextField txtAmountPaid;
     private javax.swing.JTextField txtDiscount;
