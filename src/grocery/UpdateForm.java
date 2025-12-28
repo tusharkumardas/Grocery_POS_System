@@ -9,27 +9,65 @@ import javax.swing.JOptionPane;
  * @author Tushar Kumar Das
  */
 public class UpdateForm extends javax.swing.JFrame {
-     public void setProductDetails(String itemCode, String productName, String qty, String purchasePrice, String salePrice,
-                              String mrp, String expDate, String brand, String barcode, String stockAlert) {
-         
-    jTextField9.setText(itemCode);        // Item Code
-    jTextField1.setText(productName);     // Product Name
-    jTextField2.setText(qty);             // QTY
-    jTextField3.setText(purchasePrice);   // Purchase Price
-    jTextField4.setText(salePrice);       // Sale Price
-    jTextField6.setText(mrp);             // MRP
-    jTextField10.setText(expDate);        // EXP Date
-    jTextField11.setText(brand);          // Brand
-    jTextField8.setText(barcode);         // Barcode
-    jTextField5.setText(stockAlert);      // Stock Alert
-}
+      // Method to set product details into the form
+    public void setProductDetails(String itemCode, String productName, String qty, String purchasePrice, String salePrice,
+                                  String mrp, String expDate, String brand, String barcode, String gst, String stockAlert) {
+
+        jTextField9.setText(itemCode);        // Item Code
+        jTextField1.setText(productName);     // Product Name
+        jTextField2.setText(qty);             // QTY
+        jTextField3.setText(purchasePrice);   // Purchase Price
+        jTextField4.setText(salePrice);       // Sale Price
+        jTextField6.setText(mrp);             // MRP
+        jTextField10.setText(expDate);        // EXP Date
+        jTextField11.setText(brand);          // Brand
+        jTextField8.setText(barcode);         // Barcode
+        jTextField7.setText(gst);             // GST
+        jTextField5.setText(stockAlert);      // Stock Alert
+    }
 
     /**
      * Creates new form StockManagement
      */
     public UpdateForm() {
       initComponents();
+      jTextField9.setEditable(false);
+      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
     }
+     public UpdateForm(String barcode) {
+        initComponents();
+        jTextField9.setEditable(false);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        try {
+            java.sql.Connection con = Project.ConnectionProvider.getCon();
+            java.sql.PreparedStatement pst = con.prepareStatement(
+                    "SELECT * FROM products WHERE barcode = ?"
+            );
+            pst.setString(1, barcode);
+            java.sql.ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                setProductDetails(
+                        rs.getString("item_code"),
+                        rs.getString("product_name"),
+                        String.valueOf(rs.getInt("qty")),
+                        String.valueOf(rs.getDouble("purchase_price")),
+                        String.valueOf(rs.getDouble("sale_price")),
+                        String.valueOf(rs.getDouble("mrp")),
+                        rs.getString("exp_date"),
+                        rs.getString("brand_name"),
+                        rs.getString("barcode"),
+                        String.valueOf(rs.getDouble("gst")), // Fetch GST from DB
+                        String.valueOf(rs.getInt("stock_alert"))
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching product details: " + e.getMessage());
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -64,10 +102,11 @@ public class UpdateForm extends javax.swing.JFrame {
         jTextField11 = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        jLabel8 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jPanel2.setBackground(new java.awt.Color(204, 239, 231));
+        jPanel2.setBackground(new java.awt.Color(174, 242, 242));
         jPanel2.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -169,6 +208,10 @@ public class UpdateForm extends javax.swing.JFrame {
         });
         jPanel2.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 320, 180, 40));
 
+        jLabel8.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel8.setText("Update Product Data");
+        jPanel2.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 10, -1, -1));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -209,41 +252,62 @@ public class UpdateForm extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
           try {
-        String itemCode = jTextField9.getText();
-        String productName = jTextField1.getText();
-        String qty = jTextField2.getText();
-        String purchasePrice = jTextField3.getText();
-        String salePrice = jTextField4.getText();
-        String stockAlert = jTextField5.getText();
-        String mrp = jTextField6.getText();
-        String gst = jTextField7.getText(); // optional
-        String barcode = jTextField8.getText();
-        String expDate = jTextField10.getText();
-        String brand = jTextField11.getText();
+            String itemCode = jTextField9.getText().trim();
+            String productName = jTextField1.getText().trim();
+            String qty = jTextField2.getText().trim();
+            String purchasePrice = jTextField3.getText().trim();
+            String salePrice = jTextField4.getText().trim();
+            String mrp = jTextField6.getText().trim();
+            String expDate = jTextField10.getText().trim();
+            String brand = jTextField11.getText().trim();
+            String barcode = jTextField8.getText().trim();
+            String gst = jTextField7.getText().trim();
+            String stockAlert = jTextField5.getText().trim();
 
-        java.sql.Connection con = Project.ConnectionProvider.getCon();
-        java.sql.PreparedStatement ps = con.prepareStatement(
-            "UPDATE products SET product_name=?, qty=?, purchase_price=?, sale_price=?, mrp=?, exp_date=?, brand_name=?, barcode=?, stock_alert=? WHERE item_code=?"
-        );
-        ps.setString(1, productName);
-        ps.setString(2, qty);
-        ps.setString(3, purchasePrice);
-        ps.setString(4, salePrice);
-        ps.setString(5, mrp);
-        ps.setString(6, expDate);
-        ps.setString(7, brand);
-        ps.setString(8, barcode);
-        ps.setString(9, stockAlert);
-        ps.setString(10, itemCode);
+            if (productName.isEmpty() || qty.isEmpty() || salePrice.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill all required fields");
+                return;
+            }
 
-        ps.executeUpdate();
-        JOptionPane.showMessageDialog(this, "Product Updated Successfully");
-        this.dispose();  // close the update window
+            int qtyInt = Integer.parseInt(qty);
+            double sale = Double.parseDouble(salePrice);
+            double purchase = Double.parseDouble(purchasePrice);
+            double gstDouble = Double.parseDouble(gst);
+            int alertQty = Integer.parseInt(stockAlert);
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-    }
+            if (qtyInt < 0 || sale < 0 || purchase < 0 || gstDouble < 0 || alertQty < 0) {
+                JOptionPane.showMessageDialog(this, "Values cannot be negative");
+                return;
+            }
+
+            java.sql.Connection con = Project.ConnectionProvider.getCon();
+            java.sql.PreparedStatement ps = con.prepareStatement(
+                    "UPDATE products SET product_name=?, qty=?, purchase_price=?, sale_price=?, mrp=?, exp_date=?, brand_name=?, barcode=?, gst=?, stock_alert=? WHERE item_code=?"
+            );
+
+            ps.setString(1, productName);
+            ps.setInt(2, qtyInt);
+            ps.setDouble(3, purchase);
+            ps.setDouble(4, sale);
+            ps.setString(5, mrp);
+            ps.setString(6, expDate);
+            ps.setString(7, brand);
+            ps.setString(8, barcode);
+            ps.setDouble(9, gstDouble);
+            ps.setInt(10, alertQty);
+            ps.setString(11, itemCode);
+
+            ps.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Product Updated Successfully");
+            this.dispose();
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter valid numeric values");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
@@ -296,6 +360,7 @@ public class UpdateForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField10;
